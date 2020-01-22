@@ -1,0 +1,9 @@
+{
+    "autoload": {
+        "psr-4": { "eiriksm\\Orkjern\\Tests\\": "tests/src" }
+    },
+    "require-dev": {
+        "drupal/drupal-extension": "^4.0",
+        "eiriksm/wait-for-listen": "^1.0"
+    }
+}

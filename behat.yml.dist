@@ -1,0 +1,35 @@
+default:
+  autoload:
+    - './tests/src/Context'
+  suites:
+    default:
+      paths:
+        features: '%paths.base%/tests/features'
+      filters:
+        tags: "~@todo"
+      contexts:
+        - eiriksm\Orkjern\Tests\Context\FeatureContext
+        - Drupal\DrupalExtension\Context\DrupalContext
+        - Drupal\DrupalExtension\Context\MinkContext
+        - Drupal\DrupalExtension\Context\MarkupContext
+        - Drupal\DrupalExtension\Context\MessageContext
+        - Drupal\DrupalExtension\Context\DrushContext
+  extensions:
+    Behat\MinkExtension:
+      files_path: '%paths.base%/tests/files'
+      base_url: http://127.0.0.1:12345
+      goutte: ~
+      selenium2:
+        wd_host: http://localhost:8643/wd/hub
+        capabilities:
+          chrome:
+            switches:
+              - "--headless"
+              - "--disable-gpu"
+              - "--no-sandbox"
+    Drupal\DrupalExtension:
+      blackbox: ~
+      api_driver: ''
+      region_map:
+        title: "header"
+
