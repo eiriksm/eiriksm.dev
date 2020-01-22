@@ -1,4 +1,7 @@
 {
+    "scripts": {
+        "test": "./vendor/bin/behat"
+    },
     "autoload": {
         "psr-4": { "eiriksm\\Orkjern\\Tests\\": "tests/src" }
     },

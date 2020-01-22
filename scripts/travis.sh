@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 npm i
 ./node_modules/.bin/chromedriver --port=8643 --url-base=wd/hub &
 composer install
