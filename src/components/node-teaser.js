@@ -9,8 +9,13 @@ function Teaser({ node }) {
     pagePath = '/node/' + node.drupal_internal__nid
   }
   let date = blogFormat(new Date(node.created * 1000))
+  let serverRendered = (<span data-property="is-server-rendered"></span>)
+  if (typeof window !== `undefined`) {
+    serverRendered = '';
+  }
   return (
     <article className="node node--view-mode-teaser pb-8 clearfix" about="/aa-cc" typeof="schema:Article">
+        {serverRendered}
         <div className="node__meta text-sm text-gray-700 py-1">{date}</div>
         <h2 className="node__title ">
             <Link to={ pagePath }>{ node.title }</Link>

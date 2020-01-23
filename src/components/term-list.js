@@ -13,7 +13,7 @@ export default ({ data }) => {
   })
   return (
     <Layout>
-      <div>
+      <div className="term-list">
         {list}
       </div>
     </Layout>

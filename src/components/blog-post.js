@@ -15,10 +15,15 @@ export default ({ data }) => {
   if (post.relationships.field_image) {
       img = (<img alt={post.title} className="blog-illustration" src={ post.relationships.field_image.localFile.publicURL } />)
   }
+  let serverRendered = (<span data-property="is-server-rendered"></span>)
+  if (typeof window !== `undefined`) {
+    serverRendered = '';
+  }
   return (
     <Layout>
       <article>
-        <h1>{ post.title }</h1>
+        {serverRendered}
+        <h1 id="page-title">{ post.title }</h1>
         <small className="blog-date text-gray-700 py-1">{ blogFormat(new Date(post.created * 1000)) }</small>
         <div className="article-body" dangerouslySetInnerHTML={{ __html: post.body.value }}></div>
         {img}
