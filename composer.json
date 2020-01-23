@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "test": "./vendor/bin/behat"
+        "test": "./vendor/bin/behat --colors"
     },
     "autoload": {
         "psr-4": { "eiriksm\\Orkjern\\Tests\\": "tests/src" }
