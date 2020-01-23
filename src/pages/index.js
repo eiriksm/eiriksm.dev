@@ -7,9 +7,13 @@ import Teaser from "../components/node-teaser"
 import { useStaticQuery, graphql } from "gatsby"
 
 const IndexPage = () => {
+
   const data = useStaticQuery(graphql`
   {
-    allNodeArticle(sort: {fields: created, order: DESC}) {
+    allNodeArticle(
+      sort: {fields: created, order: DESC}
+      limit: 10
+    ) {
       edges {
         node {
           id
