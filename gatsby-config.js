@@ -33,7 +33,6 @@ module.exports = {
         icon: `src/images/d8.png`,
       },
     },
-    `gatsby-plugin-offline`,
     {
       resolve: `gatsby-source-drupal`,
       options: {
