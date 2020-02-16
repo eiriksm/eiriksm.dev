@@ -2,6 +2,8 @@
 
 set -e
 
+wget $DISQUS_XML_URL -O disqus.xml
+
 npm i
 ./node_modules/.bin/chromedriver --port=8643 --url-base=wd/hub &
 composer install
