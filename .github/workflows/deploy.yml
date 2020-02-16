@@ -18,3 +18,4 @@ jobs:
           BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
           DIST_ID: ${{ secrets.DIST_ID }}
           API_URL: ${{ secrets.API_URL }}
+          DISQUS_XML_URL: ${{ secrets.DISQUS_XML_URL }}

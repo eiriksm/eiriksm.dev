@@ -5,6 +5,7 @@ RUN apk -v --update add \
         py-pip \
         groff \
         less \
+        wget \
         npm \
         mailcap \
         && \

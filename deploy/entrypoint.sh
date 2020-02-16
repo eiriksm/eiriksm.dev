@@ -2,6 +2,8 @@
 
 set -eu
 
+wget $DISQUS_XML_URL -O /disqus.xml
+
 npm i
 npm run build
 npm run deploy
