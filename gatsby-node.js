@@ -1,5 +1,6 @@
 const path = require(`path`)
 const util = require('util')
+const fetch = require('node-fetch')
 
 exports.createPages = async({ graphql, actions }) => {
   const { createPage } = actions
@@ -99,4 +100,52 @@ exports.onCreateWebpackConfig = ({
       ]
     }
   })
+}
+
+exports.sourceNodes = async({ actions, createNodeId, createContentDigest }) => {
+  const { createNode } = actions
+  try {
+    const login = process.env.BASIC_AUTH_USERNAME
+    const password = process.env.BASIC_AUTH_PASSWORD
+    let data = await fetch(process.env.API_URL + 'jsonapi/node/article', {
+      headers: new fetch.Headers({
+        "Authorization": `Basic ${new Buffer(`${login}:${password}`).toString('base64')}`
+      })
+    })
+    let json = await data.json()
+    let jobs = json.data.map(async (drupalNode) => {
+        if (!drupalNode.attributes.field_issue_comment_id) {
+          return
+        }
+        let drupalNodeId = drupalNode.attributes.field_issue_comment_id
+        let myData = {
+          drupalId: drupalNode.id,
+          issueId: drupalNodeId,
+          comments: []
+        }
+        let url = `https://www.drupal.org/api-d7/comment.json?node=${drupalNodeId}&sort=created&direction=ASC`
+        let drupalData = await fetch(url)
+        let drupalJson = await drupalData.json()
+        myData.comments = drupalJson.list
+        let nodeMeta = {
+          id: createNodeId(`drupal-org-comments-${myData.drupalId}`),
+          parent: null,
+          mediaType: "application/json",
+          children: [],
+          internal: {
+            type: `drupal__org__comment`,
+            content: JSON.stringify(myData),
+            contentDigest: createContentDigest(myData)
+          }
+        }
+        let node = Object.assign({}, myData, nodeMeta)
+        node.internal.contentDigest = createContentDigest(node)
+        createNode(node)
+      }
+    )
+    await Promise.all(jobs)
+  }
+  catch (err) {
+    throw err
+  }
 }
