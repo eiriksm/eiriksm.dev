@@ -4,7 +4,7 @@ import Layout from "../components/layout"
 import SEO from "../components/seo"
 import blogFormat from "../date"
 import Prism from "prismjs"
-import { DiscussionEmbed } from "disqus-react"
+import Comments from "./comments"
 
 export default class BlogPost extends React.Component {
   constructor(props) {
@@ -21,22 +21,17 @@ export default class BlogPost extends React.Component {
     this.setState({showImage: true})
   }
   render()  {
+    let comments = []
+    if (this.props.data.allDisqusThread.edges && this.props.data.allDisqusThread.edges[0].node.comments) {
+      comments = this.props.data.allDisqusThread.edges[0].node.comments
+    }
     let data = this.props.data
     const post = data.nodeArticle
     let url = post.path.alias
     if (!url) {
       url = '/node/' + post.drupal_internal__nid
     }
-    const disqusUrl = 'https://eiriksm.dev' + url;
-    const disqusConfig = {
-      shortname: process.env.GATSBY_DISQUS_NAME,
-      config: {
-        url: disqusUrl,
-        title: null,
-        identifier: url
-      },
-    }
-    let img;
+    let img
     if (post.relationships.field_image && post.relationships.field_image.localFile) {
       img = (
         <div className="img player"  onClick={this.handleImageClick.bind(this)}>
@@ -61,7 +56,7 @@ export default class BlogPost extends React.Component {
           <div className="article-body" dangerouslySetInnerHTML={{ __html: post.body.value }}></div>
           {img}
         </article>
-        <DiscussionEmbed shortname="orkjblog" config={disqusConfig.config} />
+        <Comments comments={comments} />
       </Layout>
     )
   }
@@ -77,12 +72,32 @@ export const query = graphql`
       path {
         alias
       }
+      drupal_internal__nid
       created
       relationships {
         field_image {
           localFile {
             publicURL
           }
+        }
+      }
+    }
+    allDisqusThread(
+      filter: {threadId: { eq: $id }}
+      ) {
+      edges {
+        node {
+          id
+          comments {
+            author {
+              username
+              name
+            }
+            createdAt
+            message
+          }
+          threadId
+          link
         }
       }
     }

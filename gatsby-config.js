@@ -141,5 +141,11 @@ module.exports = {
         pageTransitionDelay: 0,
       },
     },
+    {
+      resolve: `gatsby-source-disqus-xml`,
+      options: {
+        filePath: "disqus.xml"
+      },
+    },
   ],
 }
