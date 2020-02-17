@@ -22,7 +22,7 @@ export default class BlogPost extends React.Component {
   }
   render()  {
     let comments = []
-    if (this.props.data.allDisqusThread.edges && this.props.data.allDisqusThread.edges[0].node.comments) {
+    if (this.props.data.allDisqusThread.edges && this.props.data.allDisqusThread.edges[0] && this.props.data.allDisqusThread.edges[0].node.comments) {
       comments = this.props.data.allDisqusThread.edges[0].node.comments
     }
     let data = this.props.data
