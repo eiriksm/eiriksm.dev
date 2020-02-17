@@ -11,6 +11,7 @@ exports.createPages = async({ graphql, actions }) => {
         node {
           title
           created
+          drupal_id
           drupal_internal__nid
           id
           body {
@@ -49,6 +50,7 @@ exports.createPages = async({ graphql, actions }) => {
       component: path.resolve(`./src/components/blog-post.js`),
       context: {
         id: node.id,
+        drupal_id: node.drupal_id
       },
     })
   })
@@ -64,7 +66,7 @@ exports.createPages = async({ graphql, actions }) => {
       }
     }
   }
-  
+
   `)
   termResult.data.allTaxonomyTermTags.edges.forEach(({ node }) => {
     let pagePath = util.format('/taxonomy/term/%d', node.drupal_internal__tid)
@@ -76,7 +78,7 @@ exports.createPages = async({ graphql, actions }) => {
       },
     })
   })
-}  
+}
 
 exports.onCreateWebpackConfig = ({
   stage,

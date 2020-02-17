@@ -3,6 +3,7 @@ import { graphql } from "gatsby"
 import Layout from "../components/layout"
 import SEO from "../components/seo"
 import blogFormat from "../date"
+import format from 'date-fns/format'
 import Prism from "prismjs"
 import Comments from "./comments"
 
@@ -21,11 +22,29 @@ export default class BlogPost extends React.Component {
     this.setState({showImage: true})
   }
   render()  {
-    let comments = []
+    var comments = []
     if (this.props.data.allDisqusThread.edges && this.props.data.allDisqusThread.edges[0] && this.props.data.allDisqusThread.edges[0].node.comments) {
       comments = this.props.data.allDisqusThread.edges[0].node.comments
     }
     let data = this.props.data
+    if (data.allDrupalOrgComment.edges && data.allDrupalOrgComment.edges[0] && data.allDrupalOrgComment.edges[0].node.comments) {
+      let dcomments = data.allDrupalOrgComment.edges[0].node.comments.map(comment => {
+        // Convert to the disqus style
+        // @todo: This is just horrible.
+        var date = format(new Date(comment.created * 1000), "uuuu-LL-dd'T'HH:mm:ss'Z'")
+        return {
+          author: {
+            name: comment.name,
+          },
+          message: comment.comment_body.value,
+          createdAt: date
+        }
+      })
+      dcomments.forEach(comment => {
+        comments.push(comment)
+      })
+    }
+    console.log(comments)
     const post = data.nodeArticle
     let url = post.path.alias
     if (!url) {
@@ -63,7 +82,7 @@ export default class BlogPost extends React.Component {
 }
 
 export const query = graphql`
-  query($id: String!) {
+  query($id: String!, $drupal_id: String!) {
     nodeArticle(id: { eq: $id }) {
       title
       body {
@@ -98,6 +117,21 @@ export const query = graphql`
           }
           threadId
           link
+        }
+      }
+    }
+    allDrupalOrgComment(filter: {drupalId: {eq: $drupal_id}}) {
+      edges {
+        node {
+          id
+          drupalId
+          comments {
+            name
+            created
+            comment_body {
+              value
+            }
+          }
         }
       }
     }
