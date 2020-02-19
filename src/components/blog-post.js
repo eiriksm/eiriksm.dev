@@ -6,36 +6,65 @@ import blogFormat from "../date"
 import format from 'date-fns/format'
 import Prism from "prismjs"
 import Comments from "./comments"
+import parse from 'date-fns/parse'
 
 export default class BlogPost extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      comments: [],
       showImage: (typeof window === `undefined`)
     }
   }
   componentDidMount() {
     // call the highlightAll() function to style our code blocks
     Prism.highlightAll()
+    if (typeof window !== `undefined` && this.props.data.nodeArticle.field_issue_comment_id) {
+      window.fetch('https://www.drupal.org/api-d7/comment.json?node=' + this.props.data.nodeArticle.field_issue_comment_id + '&sort=created&direction=ASC')
+      .then(async (response) => {
+        let json = await response.json()
+        let drupalComments = json.list.filter((comment, delta) => {
+          if (delta === 0) {
+            return false
+          }
+          return true
+        })
+        drupalComments = drupalComments.map(comment => {
+          var date = new Date(comment.created * 1000)
+          return {
+            cid: comment.cid,
+            author: {
+              name: comment.name,
+            },
+            message: comment.comment_body.value,
+            createdAt: date
+          }
+        })
+        this.setState({comments: drupalComments})
+      })
+    }
   }
   handleImageClick() {
     this.setState({showImage: true})
   }
   render()  {
-    var comments = []
+    var comments = this.state.comments
     if (this.props.data.allDisqusThread.edges && this.props.data.allDisqusThread.edges[0] && this.props.data.allDisqusThread.edges[0].node.comments) {
       comments = this.props.data.allDisqusThread.edges[0].node.comments
+      comments = comments.map(comment => {
+        comment.createdAt = parse(comment.createdAt, "uuuu-LL-dd'T'HH:mm:ss'Z'", new Date())
+        return comment
+      })
     }
     let data = this.props.data
     if (data.allDrupalOrgComment.edges && data.allDrupalOrgComment.edges[0] && data.allDrupalOrgComment.edges[0].node.comments) {
       let dcomments = data.allDrupalOrgComment.edges[0].node.comments.map(comment => {
-        // Convert to the disqus style
-        // @todo: This is just horrible.
-        var date = format(new Date(comment.created * 1000), "uuuu-LL-dd'T'HH:mm:ss'Z'")
+        var date = new Date(comment.created * 1000)
         return {
           author: {
             name: comment.name,
           },
+          cid: comment.cid,
           message: comment.comment_body.value,
           createdAt: date
         }
@@ -44,7 +73,7 @@ export default class BlogPost extends React.Component {
         comments.push(comment)
       })
     }
-    console.log(comments)
+    // Now, since these can actually vary, let's sort them by the created timestamp.
     const post = data.nodeArticle
     let url = post.path.alias
     if (!url) {
@@ -85,6 +114,7 @@ export const query = graphql`
   query($id: String!, $drupal_id: String!) {
     nodeArticle(id: { eq: $id }) {
       title
+      field_issue_comment_id
       body {
         value
       }
@@ -101,6 +131,7 @@ export const query = graphql`
         }
       }
     }
+
     allDisqusThread(
       filter: {threadId: { eq: $id }}
       ) {
@@ -127,6 +158,7 @@ export const query = graphql`
           drupalId
           comments {
             name
+            cid
             created
             comment_body {
               value
