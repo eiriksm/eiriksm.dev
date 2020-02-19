@@ -86,11 +86,18 @@ export default class BlogPost extends React.Component {
           createdAt: date
         }
       })
+      dcomments = dcomments.filter((comment, delta) => {
+        if (delta === 0) {
+          return false
+        }
+        return true
+      })
       dcomments.forEach(comment => {
         comments.push(comment)
       })
     }
     // Now, since these can actually vary, let's sort them by the created timestamp.
+    comments.sort((a, b) => a.createdAt - b.createdAt)
     const post = data.nodeArticle
     let url = post.path.alias
     if (!url) {
