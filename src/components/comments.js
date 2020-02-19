@@ -1,7 +1,7 @@
 import React from "react"
 import blogFormat from '../date'
 
-function Comments({ comments }) {
+function Comments({ comments, issueId }) {
   comments = comments.filter(comment => {
     return comment.message && comment.message.length > 0
   })
@@ -11,11 +11,11 @@ function Comments({ comments }) {
       comment.author.name = 'Anonymous'
     }
     return (
-      <div key={comment.commentId} className="text-grey-dark leading-normal py-2">
-        <div className="text-grey-darkest leading-normal">
+      <div key={comment.commentId} className="eading-normal my-2 border-b-2">
+        <p className="text-xs">{comment.author.name} <span className="mx-1 text-xs">&bull;</span> <span className="text-gray-600">{date}</span></p>
+        <div className="text-gray-700 leading-normal text-xs p-2">
           <div dangerouslySetInnerHTML={{ __html: comment.message }}></div>
         </div>
-        <p className="text-sm">{comment.author.name} <span className="mx-1 text-xs">&bull;</span> <span className="text-gray-600">{date}</span></p>
       </div>
     )
   })
@@ -24,16 +24,32 @@ function Comments({ comments }) {
   if (commentCount === 1) {
     commentWord = 'comment'
   }
+  if (commentCount === 0) {
+    commentWord += ' 😿'
+  }
+  let commentInfo;
+  if (issueId) {
+    commentInfo = (<div className="">
+    <p>Do you want to comment?</p>
+    <p className="text-sm">This article uses drupal.org for commenting. To comment, you can visit <a href={'https://drupal.org/node/'+issueId}>https://drupal.org/node/{issueId}
+      </a>. This also means you can get issue credits for commenting!</p>
+  </div>)
+  }
   return (
-      <div className="comment-wrapper">
-        {commentCount} {commentWord}
+      <div className="comment-wrapper border-t-2 my-2 py-1">
+        <div className="comment-header border-b-2 py-2 uppercase font-bold">
+          <span className="count bg-blue-800 text-white rounded text-lg p-1">{commentCount}</span><span> </span>
+          {commentWord}
+        </div>
         {commentList}
+        {commentInfo}
       </div>
   )
 }
 
 Comments.defaultProps = {
-  comments: []
+  comments: [],
+  issueId: null
 }
 
 export default Comments

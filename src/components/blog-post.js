@@ -43,13 +43,18 @@ export default class BlogPost extends React.Component {
         drupalComments = drupalComments.filter(comment => {
           let haveIt = false
           this.state.comments.forEach((existing) => {
-            if (existing.cid == comment.cid) {
+            if (existing.cid === comment.cid) {
               haveIt = true
             }
           })
           return !haveIt
         })
-        this.setState({comments: drupalComments})
+        this.setState(state => {
+          const comments = state.comments.concat(drupalComments);
+          return {
+            comments
+          };
+        })
       })
     }
   }
@@ -57,6 +62,9 @@ export default class BlogPost extends React.Component {
     this.setState({showImage: true})
   }
   render()  {
+    if (typeof window !== `undefined`) {
+      Prism.highlightAll()
+    }
     var comments = this.state.comments
     if (this.props.data.allDisqusThread.edges && this.props.data.allDisqusThread.edges[0] && this.props.data.allDisqusThread.edges[0].node.comments) {
       let disqusComments = this.props.data.allDisqusThread.edges[0].node.comments
@@ -67,6 +75,15 @@ export default class BlogPost extends React.Component {
           comment.commentId = 'disqus-' + comment.id
         }
         return comment
+      })
+      commentsCorrect = commentsCorrect.filter(comment => {
+        let haveIt = false
+        comments.forEach((existing) => {
+          if (existing.cid === comment.cid) {
+            haveIt = true
+          }
+        })
+        return !haveIt
       })
       commentsCorrect.forEach(comment => {
         comments.push(comment)
@@ -92,6 +109,16 @@ export default class BlogPost extends React.Component {
         }
         return true
       })
+      dcomments = dcomments.filter(comment => {
+        let haveIt = false
+        comments.forEach((existing) => {
+          if (existing.cid === comment.cid) {
+            haveIt = true
+          }
+        })
+        return !haveIt
+      })
+
       dcomments.forEach(comment => {
         comments.push(comment)
       })
@@ -118,6 +145,10 @@ export default class BlogPost extends React.Component {
     if (typeof window !== `undefined`) {
       serverRendered = '';
     }
+    let issueId = null
+    if (this.props.data.nodeArticle.field_issue_comment_id) {
+      issueId = this.props.data.nodeArticle.field_issue_comment_id
+    }
     return (
       <Layout>
         <article className="full">
@@ -128,7 +159,7 @@ export default class BlogPost extends React.Component {
           <div className="article-body" dangerouslySetInnerHTML={{ __html: post.body.value }}></div>
           {img}
         </article>
-        <Comments comments={comments} />
+        <Comments comments={comments} issueId={issueId} />
       </Layout>
     )
   }
