@@ -9,7 +9,7 @@ import parse from 'date-fns/parse'
 
 export default class BlogPost extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       comments: [],
       showImage: (typeof window === `undefined`)
