@@ -11,7 +11,7 @@ function Comments({ comments }) {
       comment.author.name = 'Anonymous'
     }
     return (
-      <div key={comment.id} className="text-grey-dark leading-normal py-2">
+      <div key={comment.commentId} className="text-grey-dark leading-normal py-2">
         <div className="text-grey-darkest leading-normal">
           <div dangerouslySetInnerHTML={{ __html: comment.message }}></div>
         </div>

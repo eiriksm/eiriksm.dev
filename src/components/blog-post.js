@@ -3,7 +3,6 @@ import { graphql } from "gatsby"
 import Layout from "../components/layout"
 import SEO from "../components/seo"
 import blogFormat from "../date"
-import format from 'date-fns/format'
 import Prism from "prismjs"
 import Comments from "./comments"
 import parse from 'date-fns/parse'
@@ -33,12 +32,22 @@ export default class BlogPost extends React.Component {
           var date = new Date(comment.created * 1000)
           return {
             cid: comment.cid,
+            commentId: 'drupal-' + comment.cid,
             author: {
               name: comment.name,
             },
             message: comment.comment_body.value,
             createdAt: date
           }
+        })
+        drupalComments = drupalComments.filter(comment => {
+          let haveIt = false
+          this.state.comments.forEach((existing) => {
+            if (existing.cid == comment.cid) {
+              haveIt = true
+            }
+          })
+          return !haveIt
         })
         this.setState({comments: drupalComments})
       })
@@ -50,10 +59,17 @@ export default class BlogPost extends React.Component {
   render()  {
     var comments = this.state.comments
     if (this.props.data.allDisqusThread.edges && this.props.data.allDisqusThread.edges[0] && this.props.data.allDisqusThread.edges[0].node.comments) {
-      comments = this.props.data.allDisqusThread.edges[0].node.comments
-      comments = comments.map(comment => {
-        comment.createdAt = parse(comment.createdAt, "uuuu-LL-dd'T'HH:mm:ss'Z'", new Date())
+      let disqusComments = this.props.data.allDisqusThread.edges[0].node.comments
+      let commentsCorrect = disqusComments.map(comment => {
+        if (typeof comment.createdAt.getMonth !== 'function') {
+          // Not already a date object.
+          comment.createdAt = parse(comment.createdAt, "uuuu-LL-dd'T'HH:mm:ss'Z'", new Date())
+          comment.commentId = 'disqus-' + comment.id
+        }
         return comment
+      })
+      commentsCorrect.forEach(comment => {
+        comments.push(comment)
       })
     }
     let data = this.props.data
@@ -65,6 +81,7 @@ export default class BlogPost extends React.Component {
             name: comment.name,
           },
           cid: comment.cid,
+          commentId: 'drupal-' + comment.cid,
           message: comment.comment_body.value,
           createdAt: date
         }
@@ -143,6 +160,7 @@ export const query = graphql`
               username
               name
             }
+            id
             createdAt
             message
           }
