@@ -45,9 +45,15 @@ a {
   @apply .text-base .text-sm .text-teal-700 .no-underline;
   display: block;
 }
-blockquote {
+.article-body blockquote {
   @apply .p-4 .text-xl .italic .border-l-4 .text-gray-700 .border-gray-600;
-  margin-top: 42px;
+  @apply mt-2;
+}
+.comment-wrapper p {
+  @apply .mb-2;
+}
+.comment-wrapper blockquote {
+  @apply .m-0 .p-1 .mt-2 .italic .border-l-4 .text-gray-700 .border-gray-600;
 }
 .article-body blockquote p {
   margin-top: 0px;
