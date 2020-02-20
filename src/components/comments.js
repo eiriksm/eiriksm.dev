@@ -19,11 +19,13 @@ function Comments({ comments, issueId }) {
       </div>
     )
   })
-  let commentCount = comments.length
+  let commentCount = comments.length + ''
+  commentCount = commentCount.padStart(2, '0')
   let commentWord = 'comments'
   if (commentCount === 1) {
     commentWord = 'comment'
   }
+
   if (commentCount === 0) {
     commentWord += ' 😿'
   }
@@ -38,7 +40,7 @@ function Comments({ comments, issueId }) {
   return (
       <div className="comment-wrapper border-t-2 my-2 py-1">
         <div className="comment-header border-b-2 py-2 uppercase font-bold">
-          <span className="count bg-blue-800 text-white rounded text-lg p-1">{commentCount}</span><span> </span>
+          <span className="count bg-blue-800 text-white rounded text-lg p-1 font-mono">{commentCount}</span><span> </span>
           {commentWord}
         </div>
         {commentList}
