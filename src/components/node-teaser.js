@@ -14,7 +14,7 @@ function Teaser({ node }) {
     serverRendered = '';
   }
   return (
-    <article className="node node--view-mode-teaser pb-8 clearfix" about="/aa-cc" typeof="schema:Article">
+    <article className="node node--view-mode-teaser pb-4 clearfix" about={pagePath} typeof="schema:Article">
         {serverRendered}
         <div className="node__meta text-sm text-gray-700 py-1">{date}</div>
         <h2 className="node__title ">

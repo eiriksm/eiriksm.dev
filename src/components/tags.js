@@ -6,7 +6,7 @@ function Tags({ tags }) {
       let path = util.format('/taxonomy/term/%d', tag.drupal_internal__tid)
       return (
           <li key={tag.id}>
-              <a className="mr-4" href={path}>
+              <a className="mr-2 border-2 p-2 py-1 mb-1" href={path}>
               {tag.name}
               </a>
           </li>

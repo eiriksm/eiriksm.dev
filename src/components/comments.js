@@ -20,15 +20,15 @@ function Comments({ comments, issueId }) {
     )
   })
   let commentCount = comments.length + ''
-  commentCount = commentCount.padStart(2, '0')
   let commentWord = 'comments'
   if (commentCount === 1) {
     commentWord = 'comment'
   }
 
-  if (commentCount === 0) {
+  if (commentCount === '0') {
     commentWord += ' 😿'
   }
+  commentCount = commentCount.padStart(2, '0')
   let commentInfo;
   if (issueId) {
     commentInfo = (<div className="">

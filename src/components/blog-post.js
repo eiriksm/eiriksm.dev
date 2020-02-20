@@ -5,6 +5,7 @@ import SEO from "../components/seo"
 import blogFormat from "../date"
 import Prism from "prismjs"
 import Comments from "./comments"
+import Tags from "./tags"
 import parse from 'date-fns/parse'
 
 export default class BlogPost extends React.Component {
@@ -137,6 +138,7 @@ export default class BlogPost extends React.Component {
           <small className="blog-date text-gray-700 py-1">{ blogFormat(new Date(post.created * 1000)) }</small>
           <div className="article-body" dangerouslySetInnerHTML={{ __html: post.body.value }}></div>
           {img}
+          <Tags tags={post.relationships.field_tags}></Tags>
         </article>
         <Comments comments={comments} issueId={issueId} />
       </Layout>
@@ -158,6 +160,11 @@ export const query = graphql`
       drupal_internal__nid
       created
       relationships {
+        field_tags {
+          name
+          id
+          drupal_internal__tid
+        }
         field_image {
           localFile {
             publicURL
