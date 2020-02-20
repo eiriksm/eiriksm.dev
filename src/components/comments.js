@@ -31,8 +31,8 @@ function Comments({ comments, issueId }) {
   if (issueId) {
     commentInfo = (<div className="">
     <p>Do you want to comment?</p>
-    <p className="text-sm">This article uses drupal.org for commenting. To comment, you can visit <a href={'https://drupal.org/node/'+issueId}>https://drupal.org/node/{issueId}
-      </a>. This also means you can get issue credits for commenting!</p>
+    <p className="text-sm">This article uses github for commenting. To comment, you can visit <a href={'https://github.com/eiriksm/eiriksm.dev-comments/issues/'+issueId}>https://github.com/eiriksm/eiriksm.dev-comments/issues/{issueId}
+      </a>.</p>
   </div>)
   }
   return (

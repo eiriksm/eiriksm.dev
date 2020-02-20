@@ -19,28 +19,11 @@ export default class BlogPost extends React.Component {
     // call the highlightAll() function to style our code blocks
     Prism.highlightAll()
     if (typeof window !== `undefined` && this.props.data.nodeArticle.field_issue_comment_id) {
-      window.fetch('https://www.drupal.org/api-d7/comment.json?node=' + this.props.data.nodeArticle.field_issue_comment_id + '&sort=created&direction=ASC')
+      window.fetch('https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/' + this.props.data.nodeArticle.field_issue_comment_id + '/comments')
       .then(async (response) => {
         let json = await response.json()
-        let drupalComments = json.list.filter((comment, delta) => {
-          if (delta === 0) {
-            return false
-          }
-          return true
-        })
-        drupalComments = drupalComments.map(comment => {
-          var date = new Date(comment.created * 1000)
-          return {
-            cid: comment.cid,
-            commentId: 'drupal-' + comment.cid,
-            author: {
-              name: comment.name,
-            },
-            message: comment.comment_body.value,
-            createdAt: date
-          }
-        })
-        drupalComments = drupalComments.filter(comment => {
+        let githubComments = this.createCommentsFromGithubList(json)
+        githubComments = githubComments.filter(comment => {
           let haveIt = false
           this.state.comments.forEach((existing) => {
             if (existing.cid === comment.cid) {
@@ -50,13 +33,26 @@ export default class BlogPost extends React.Component {
           return !haveIt
         })
         this.setState(state => {
-          const comments = state.comments.concat(drupalComments);
+          const comments = state.comments.concat(githubComments);
           return {
             comments
           };
         })
       })
     }
+  }
+  createCommentsFromGithubList(comments) {
+    return comments.map(comment => {
+      return {
+        createdAt: parse(comment.created_at, "uuuu-LL-dd'T'HH:mm:ss'Z'", new Date()),
+        author: {
+          name: comment.user.login,
+        },
+        cid: comment.id,
+        commentId: 'github-' + comment.cid,
+        message: comment.body,
+      }
+    })
   }
   handleImageClick() {
     this.setState({showImage: true})
@@ -90,26 +86,9 @@ export default class BlogPost extends React.Component {
       })
     }
     let data = this.props.data
-    if (data.allDrupalOrgComment.edges && data.allDrupalOrgComment.edges[0] && data.allDrupalOrgComment.edges[0].node.comments) {
-      let dcomments = data.allDrupalOrgComment.edges[0].node.comments.map(comment => {
-        var date = new Date(comment.created * 1000)
-        return {
-          author: {
-            name: comment.name,
-          },
-          cid: comment.cid,
-          commentId: 'drupal-' + comment.cid,
-          message: comment.comment_body.value,
-          createdAt: date
-        }
-      })
-      dcomments = dcomments.filter((comment, delta) => {
-        if (delta === 0) {
-          return false
-        }
-        return true
-      })
-      dcomments = dcomments.filter(comment => {
+    if (data.allGithubComment && data.allGithubComment.nodes && data.allGithubComment.nodes[0] && data.allGithubComment.nodes[0].comments) {
+      let gcomments = this.createCommentsFromGithubList(data.allGithubComment.nodes[0].comments)
+      gcomments = gcomments.filter(comment => {
         let haveIt = false
         comments.forEach((existing) => {
           if (existing.cid === comment.cid) {
@@ -119,7 +98,7 @@ export default class BlogPost extends React.Component {
         return !haveIt
       })
 
-      dcomments.forEach(comment => {
+      gcomments.forEach(comment => {
         comments.push(comment)
       })
     }
@@ -207,18 +186,15 @@ export const query = graphql`
         }
       }
     }
-    allDrupalOrgComment(filter: {drupalId: {eq: $drupal_id}}) {
-      edges {
-        node {
+    allGithubComment(filter: {drupalId: {eq: $drupal_id}}) {
+      nodes {
+        drupalId
+        comments {
+          body
           id
-          drupalId
-          comments {
-            name
-            cid
-            created
-            comment_body {
-              value
-            }
+          created_at
+          user {
+            login
           }
         }
       }

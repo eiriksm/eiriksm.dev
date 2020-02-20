@@ -119,25 +119,24 @@ exports.sourceNodes = async({ actions, createNodeId, createContentDigest }) => {
         if (!drupalNode.attributes.field_issue_comment_id) {
           return
         }
-        let drupalNodeId = drupalNode.attributes.field_issue_comment_id
+        let issueId = drupalNode.attributes.field_issue_comment_id
         let myData = {
           drupalId: drupalNode.id,
-          issueId: drupalNodeId,
+          issueId,
           comments: []
         }
-        let url = `https://www.drupal.org/api-d7/comment.json?node=${drupalNodeId}&sort=created&direction=ASC`
-        let drupalData = await fetch(url)
-        let drupalJson = await drupalData.json()
-        myData.comments = drupalJson.list
+        let url = `https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/${issueId}/comments`
+        let githubData = await fetch(url)
+        let githubJson = await githubData.json()
+        myData.comments = githubJson
         let nodeMeta = {
-          id: createNodeId(`drupal-org-comments-${myData.drupalId}`),
+          id: createNodeId(`github-comments-${myData.drupalId}`),
           parent: null,
           mediaType: "application/json",
           children: [],
           internal: {
-            type: `drupal__org__comment`,
-            content: JSON.stringify(myData),
-            contentDigest: createContentDigest(myData)
+            type: `github__comment`,
+            content: JSON.stringify(myData)
           }
         }
         let node = Object.assign({}, myData, nodeMeta)
