@@ -11,10 +11,14 @@ function Comments({ comments, issueId }) {
     if (!comment.author.name) {
       comment.author.name = 'Anonymous'
     }
+    let fullDate = comment.createdAt.toString()
     comment.message = emoji.emojify(comment.message)
     return (
-      <div key={comment.commentId} className="eading-normal my-2 border-b-2">
-        <p className="text-xs">{comment.author.name} <span className="mx-1 text-xs">&bull;</span> <span className="text-gray-600">{date}</span></p>
+      <div key={comment.commentId} className="my-2 border-b-2">
+        <p className="text-xs">{comment.author.name}
+          <span className="mx-1 text-xs">&bull;</span>
+          <span className="text-gray-600" title={fullDate}>{date}</span>
+        </p>
         <div className="text-gray-700 leading-normal text-xs p-2">
           <div dangerouslySetInnerHTML={{ __html: comment.message }}></div>
         </div>

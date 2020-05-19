@@ -46,7 +46,7 @@ export default class BlogPost extends React.Component {
     return comments.map(comment => {
       comment.body = comment.body.replace(/(\r\n)/g, '<br>')
       return {
-        createdAt: parse(comment.created_at, "uuuu-LL-dd'T'HH:mm:ss'Z'", new Date()),
+        createdAt: parse(comment.created_at + '+00', "uuuu-LL-dd'T'HH:mm:ss'Z'x", new Date()),
         author: {
           name: comment.user.login,
         },
