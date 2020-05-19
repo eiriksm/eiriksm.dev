@@ -5,16 +5,14 @@ import React from "react"
 const Header = ({ siteTitle }) => {
   return (
     <header className="pb-4">
-    <div className="container px-4">
-      <h1>
-        <Link className="text-gray-700 text-lg font-mono"
-          to="/"
-        >
-          {siteTitle}
-        </Link>
-      </h1>
-    </div>
-  </header>
+      <div className="container px-4">
+        <h1>
+          <Link className="text-gray-700 text-lg font-mono" to="/">
+            {siteTitle}
+          </Link>
+        </h1>
+      </div>
+    </header>
   )
 }
 

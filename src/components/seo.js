@@ -66,7 +66,8 @@ function SEO({ description, lang, meta, title }) {
         },
         {
           name: `og:image`,
-          content: site.siteMetadata.siteUrl + '/sites/default/files/eiriksm.png',
+          content:
+            site.siteMetadata.siteUrl + "/sites/default/files/eiriksm.png",
         },
         {
           name: `twitter:description`,
