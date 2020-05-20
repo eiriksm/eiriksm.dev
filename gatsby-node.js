@@ -126,7 +126,12 @@ exports.sourceNodes = async({ actions, createNodeId, createContentDigest }) => {
           comments: []
         }
         let url = `https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/${issueId}/comments`
-        let githubData = await fetch(url)
+        const githubToken = process.env.GITHUB_TOKEN
+        let githubData = await fetch(url, {
+          headers: new fetch.Headers({
+            "Authorization": `Basic ${new Buffer(`eiriksm:${githubToken}`).toString('base64')}`
+          })
+        })
         let githubJson = await githubData.json()
         myData.comments = githubJson
         let nodeMeta = {

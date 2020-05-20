@@ -16,3 +16,4 @@ jobs:
           DIST_ID: ${{ secrets.DIST_ID }}
           API_URL: ${{ secrets.API_URL }}
           DISQUS_XML_URL: ${{ secrets.DISQUS_XML_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
