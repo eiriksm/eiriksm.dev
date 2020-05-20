@@ -60,7 +60,6 @@ function Comments({ comments, issueId }) {
       }
       let fullDate = comment.createdAt.toString()
       let body = clone(comment.message)
-      console.log(comment)
       body = body.replace(/(\r\n)/g, "<br>")
       body = body.replace(/(\n)/g, "<br>")
       body = emoji.emojify(body)
