@@ -52,7 +52,6 @@ export default class BlogPost extends React.Component {
   }
   createCommentsFromGithubList(comments) {
     return comments.map(comment => {
-      comment.body = comment.body.replace(/(\r\n)/g, "<br>")
       return {
         createdAt: parse(
           comment.created_at + "+00",

@@ -115,7 +115,10 @@ footer .eirik {
 .blog-pager a[rel="next"] {
   text-align: right;
 }
-
+.comment-wrapper pre {
+  padding: 1em;
+  background-color: theme("colors.gray.200");
+}
 @tailwind components;
 
 @tailwind utilities;

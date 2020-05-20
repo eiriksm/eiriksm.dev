@@ -1,34 +1,89 @@
-import React from "react"
+import React, { useState, useEffect } from 'react'
 import blogFormat from "../date"
+import clone from "lodash.clone"
 const emoji = require("node-emoji")
+const util = require('util');
 
+var remark = require('remark')
+var html = require('remark-html')
 function Comments({ comments, issueId }) {
+  const [commentList, setCommentList] = useState(false);
   comments = comments.filter(comment => {
     return comment.message && comment.message.length > 0
   })
-  let commentList = comments.map(comment => {
-    let date = blogFormat(comment.createdAt.getTime())
-    if (!comment.author.name) {
-      comment.author.name = "Anonymous"
+
+  useEffect(() => {
+    if (commentList === false) {
+      renderComments()
     }
-    let fullDate = comment.createdAt.toString()
-    comment.message = emoji.emojify(comment.message)
-    return (
-      <div key={comment.commentId} className="my-2 border-b-2">
-        <p className="text-xs">
-          {comment.author.name}
-          <span className="mx-1 text-xs">&bull;</span>
-          <span className="text-gray-600" title={fullDate}>
-            {date}
-          </span>
-        </p>
-        <div className="text-gray-700 leading-normal text-xs p-2">
-          <div dangerouslySetInnerHTML={{ __html: comment.message }}></div>
+  });
+
+  const renderComments = async() => {
+    let commentListJobs = comments.map(async comment => {
+      let date = blogFormat(comment.createdAt.getTime())
+      if (!comment.author.name) {
+        comment.author.name = "Anonymous"
+      }
+      let fullDate = comment.createdAt.toString()
+      comment.message = emoji.emojify(comment.message)
+      // Also markdownify this thing.
+      var promise = util.promisify(remark()
+        .use(html)
+        .process)
+      comment.message = await promise(comment.message)
+      return (
+        <div key={comment.commentId} className="my-2 border-b-2">
+          <p className="text-xs">
+            {comment.author.name}
+            <span className="mx-1 text-xs">&bull;</span>
+            <span className="text-gray-600" title={fullDate}>
+              {date}
+            </span>
+          </p>
+          <div className="text-gray-700 leading-normal text-xs p-2">
+            <div dangerouslySetInnerHTML={{ __html: comment.message }}></div>
+          </div>
         </div>
-      </div>
-    )
-  })
-  let commentCount = comments.length + ""
+      )
+    })
+    var commentList = await Promise.all(commentListJobs)
+    setCommentList(commentList)
+  }
+  let commentInfo
+  let commentListComponents
+  if (commentList === false) {
+    let commentCopy = clone(comments)
+    commentListComponents = commentCopy.map(comment => {
+      let date = blogFormat(comment.createdAt.getTime())
+      if (!comment.author.name) {
+        comment.author.name = "Anonymous"
+      }
+      let fullDate = comment.createdAt.toString()
+      let body = clone(comment.message)
+      console.log(comment)
+      body = body.replace(/(\r\n)/g, "<br>")
+      body = body.replace(/(\n)/g, "<br>")
+      body = emoji.emojify(body)
+      return (
+        <div key={comment.commentId} className="my-2 border-b-2">
+          <p className="text-xs">
+            {comment.author.name}
+            <span className="mx-1 text-xs">&bull;</span>
+            <span className="text-gray-600" title={fullDate}>
+              {date}
+            </span>
+          </p>
+          <div className="text-gray-700 leading-normal text-xs p-2">
+            <div dangerouslySetInnerHTML={{ __html: body }}></div>
+          </div>
+        </div>
+      )
+    })
+  }
+  else {
+    commentListComponents = commentList
+  }
+  let commentCount = commentListComponents.length + ""
   let commentWord = "comments"
   if (commentCount === "1") {
     commentWord = "comment"
@@ -38,7 +93,6 @@ function Comments({ comments, issueId }) {
     commentWord += " 😿"
   }
   commentCount = commentCount.padStart(2, "0")
-  let commentInfo
   if (issueId) {
     commentInfo = (
       <div className="">
@@ -67,7 +121,7 @@ function Comments({ comments, issueId }) {
         <span> </span>
         {commentWord}
       </div>
-      {commentList}
+      {commentListComponents}
       {commentInfo}
     </div>
   )
