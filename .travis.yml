@@ -20,4 +20,5 @@ before_script:
   - /bin/bash scripts/travis.sh
 
 script:
+  - mkdir -p public/ci_issues
   - composer test
