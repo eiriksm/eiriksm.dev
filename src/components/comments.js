@@ -52,7 +52,7 @@ function Comments({ comments, issueId }) {
     }
     else {
       if (comments.length !== commentList.length) {
-        //setCommentList(false)
+        setCommentList(false)
       }
     }
   }, [commentList, comments]);
