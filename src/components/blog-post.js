@@ -11,6 +11,14 @@ import parse from "date-fns/parse"
 export default class BlogPost extends React.Component {
   constructor(props) {
     super(props)
+    this.issueBase = 'https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/'
+    try {
+      if (props.data.allSite.edges[0].node.siteMetadata.issueBase) {
+        this.issueBase = this.props.data.allSite.edges[0].node.siteMetadata.issueBase;
+      }
+    } catch (err) {
+      // Meh.
+    }
     this.state = {
       comments: [],
       showImage: typeof window === `undefined`,
@@ -25,7 +33,7 @@ export default class BlogPost extends React.Component {
     ) {
       window
         .fetch(
-          "https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/" +
+          this.issueBase +
             this.props.data.nodeArticle.field_issue_comment_id +
             "/comments"
         )
@@ -232,6 +240,15 @@ export const query = graphql`
           }
           threadId
           link
+        }
+      }
+    }
+    allSite {
+      edges {
+        node {
+          siteMetadata {
+            issueBase
+          }
         }
       }
     }

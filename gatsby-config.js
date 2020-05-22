@@ -8,6 +8,7 @@ module.exports = {
     siteUrl: 'https://eiriksm.dev',
     description: `eiriksm.dev: Drupal blog for eiriksm.`,
     author: `@orkj`,
+    issueBase: process.env.ISSUE_BASE ? process.env.ISSUE_BASE : 'https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/'
   },
   plugins: [
     `gatsby-plugin-postcss`,

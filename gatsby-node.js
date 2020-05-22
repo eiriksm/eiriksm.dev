@@ -116,39 +116,38 @@ exports.sourceNodes = async({ actions, createNodeId, createContentDigest }) => {
     })
     let json = await data.json()
     let jobs = json.data.map(async (drupalNode) => {
-        if (!drupalNode.attributes.field_issue_comment_id) {
-          return
-        }
-        let issueId = drupalNode.attributes.field_issue_comment_id
-        let myData = {
-          drupalId: drupalNode.id,
-          issueId,
-          comments: []
-        }
-        let url = `https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/${issueId}/comments`
-        const githubToken = process.env.GITHUB_TOKEN
-        let githubData = await fetch(url, {
-          headers: new fetch.Headers({
-            "Authorization": `Basic ${new Buffer(`eiriksm:${githubToken}`).toString('base64')}`
-          })
-        })
-        let githubJson = await githubData.json()
-        myData.comments = githubJson
-        let nodeMeta = {
-          id: createNodeId(`github-comments-${myData.drupalId}`),
-          parent: null,
-          mediaType: "application/json",
-          children: [],
-          internal: {
-            type: `github__comment`,
-            content: JSON.stringify(myData)
-          }
-        }
-        let node = Object.assign({}, myData, nodeMeta)
-        node.internal.contentDigest = createContentDigest(node)
-        createNode(node)
+      if (!drupalNode.attributes.field_issue_comment_id) {
+        return
       }
-    )
+      let issueId = drupalNode.attributes.field_issue_comment_id
+      let myData = {
+        drupalId: drupalNode.id,
+        issueId,
+        comments: []
+      }
+      let url = `https://api.github.com/repos/eiriksm/eiriksm.dev-comments/issues/${issueId}/comments`
+      const githubToken = process.env.GITHUB_TOKEN
+      let githubData = await fetch(url, {
+        headers: new fetch.Headers({
+          "Authorization": `Basic ${new Buffer(`eiriksm:${githubToken}`).toString('base64')}`
+        })
+      })
+      let githubJson = await githubData.json()
+      myData.comments = githubJson
+      let nodeMeta = {
+        id: createNodeId(`github-comments-${myData.drupalId}`),
+        parent: null,
+        mediaType: "application/json",
+        children: [],
+        internal: {
+          type: `github__comment`,
+          content: JSON.stringify(myData)
+        }
+      }
+      let node = Object.assign({}, myData, nodeMeta)
+      node.internal.contentDigest = createContentDigest(node)
+      createNode(node)
+    })
     await Promise.all(jobs)
   }
   catch (err) {
