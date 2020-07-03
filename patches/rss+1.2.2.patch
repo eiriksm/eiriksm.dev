@@ -1,0 +1,12 @@
+diff --git a/node_modules/rss/lib/index.js b/node_modules/rss/lib/index.js
+index 2ad40a4..2c9cc3d 100755
+--- a/node_modules/rss/lib/index.js
++++ b/node_modules/rss/lib/index.js
+@@ -39,7 +39,6 @@ function generateXML (data){
+         channel.push({ image:  [ {url: data.image_url}, {title: data.title},  {link: data.site_url} ] });
+     }
+     channel.push({ generator:       data.generator });
+-    channel.push({ lastBuildDate:   new Date().toUTCString() });
+ 
+     ifTruePush(data.feed_url, channel, { 'atom:link': { _attr: { href: data.feed_url, rel: 'self', type: 'application/rss+xml' } } });
+     ifTruePush(data.author, channel, { 'author': { _cdata: data.author } });

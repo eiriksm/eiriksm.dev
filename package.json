@@ -28,6 +28,7 @@
     "lodash.clone": "^4.5.0",
     "node-emoji": "^1.10.0",
     "node-fetch": "^2.6.0",
+    "patch-package": "^6.2.2",
     "postcss-loader": "^3.0.0",
     "precss": "^4.0.0",
     "prismjs": "^1.17.1",
@@ -51,6 +52,7 @@
     "start": "npm run develop",
     "deploy": "./node_modules/.bin/gatsby-plugin-s3 deploy --yes",
     "serve": "gatsby serve",
-    "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
+    "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1",
+    "postinstall": "patch-package"
   }
 }
