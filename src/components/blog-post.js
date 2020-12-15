@@ -174,8 +174,26 @@ export default class BlogPost extends React.Component {
     if (this.props.data.nodeArticle.field_issue_comment_id) {
       issueId = this.props.data.nodeArticle.field_issue_comment_id
     }
+    const structuredData = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://google.com/article"
+      },
+      image: 'https://eiriksm.dev/sites/default/files/eiriksm.png',
+      "headline": post.title,
+      "datePublished": new Date(post.created * 1000).toISOString(),
+      "author": {
+        "@type": "Person",
+        "name": "Eirik S. Morland"
+      }
+    });
     return (
       <Layout>
+        <script type="application/ld+json">
+          {structuredData}
+        </script>
         <article className="full">
           <SEO title={post.title} />
           {serverRendered}
