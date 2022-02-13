@@ -1,4 +1,7 @@
 {
+    "name": "eiriksm/eiriksm.dev",
+    "description": "The website for eiriksm.dev",
+    "license": "proprietary",
     "scripts": {
         "test": "./vendor/bin/behat --colors"
     },
