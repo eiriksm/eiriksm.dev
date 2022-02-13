@@ -43,9 +43,17 @@ jobs:
 
       - name: Build the site
         run: npm run build
+        env:
+          BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
+          BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
+          API_URL: ${{ secrets.API_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start the serving of the site
         run: npm run serve &
 
       - name: Make sure serving has started
         run: ./vendor/bin/wait-for-listen 9000
+
+      - name: Debug
+        run: docker run -it --rm --entrypoint="" nymediaas/chrome-headless:89 ifconfig
