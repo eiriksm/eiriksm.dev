@@ -50,10 +50,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start the serving of the site
-        run: npm run serve &
+        run: npm run serve -H 0.0.0.0 &
 
       - name: Make sure serving has started
         run: ./vendor/bin/wait-for-listen 9000
 
       - name: Debug
-        run: docker run -it --rm --entrypoint="" nymediaas/chrome-headless:89 ifconfig
+        run: docker run --rm --entrypoint="" nymediaas/chrome-headless:89 ifconfig
