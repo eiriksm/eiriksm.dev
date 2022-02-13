@@ -40,3 +40,12 @@ jobs:
 
       - name: Install node dependencies
         run: npm i
+
+      - name: Build the site
+        run: npm run build
+
+      - name: Start the serving of the site
+        run: npm run serve &
+
+      - name: Make sure serving has started
+        run: ./vendor/bin/wait-for-listen 9000
