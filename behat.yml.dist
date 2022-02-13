@@ -17,10 +17,10 @@ default:
   extensions:
     Behat\MinkExtension:
       files_path: '%paths.base%/tests/files'
-      base_url: http://127.0.0.1:9000
+      base_url: http://172.17.0.1:9000
       goutte: ~
       selenium2:
-        wd_host: http://localhost:8643/wd/hub
+        wd_host: http://chromedriver:8643/wd/hub
         capabilities:
           chrome:
             switches:
@@ -32,4 +32,3 @@ default:
       api_driver: ''
       region_map:
         title: "header"
-
