@@ -9,7 +9,6 @@ addons:
 
 env:
   - TRAVIS_NODE_VERSION="12"
-  - BEHAT_PARAMS="{\"extensions\":{\"Behat\\\\MinkExtension\":{\"base_url\":\"http://localhost:9000\"}}}"
 
 matrix:
   fast_finish: true
@@ -22,4 +21,4 @@ before_script:
 
 script:
   - mkdir -p public/ci_issues
-  - composer test
+  - BEHAT_PARAMS="{\"extensions\":{\"Behat\\\\MinkExtension\":{\"base_url\":\"http://localhost:9000\"}}}" composer test
