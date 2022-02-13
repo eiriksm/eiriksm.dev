@@ -60,3 +60,9 @@ jobs:
 
       - name: Debug
         run: docker run --rm --entrypoint="" nymediaas/chrome-headless:89 ifconfig
+
+      - name: Make a directory we need
+        run: mkdir -p public/ci_issues
+
+      - name: Run tests
+        run: composer test
