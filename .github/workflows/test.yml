@@ -49,7 +49,7 @@ jobs:
       - name: Build the site
         run: npm run build
         env:
-          ISSUE_BASE: http://localhost:9000/ci_issues/
+          ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
           BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
           BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
           API_URL: ${{ secrets.API_URL }}
