@@ -21,4 +21,6 @@ before_script:
 
 script:
   - mkdir -p public/ci_issues
-  - BEHAT_PARAMS="{\"extensions\":{\"Behat\\\\MinkExtension\":{\"base_url\":\"http://localhost:9000\"}}}" composer test
+  # GAH
+  - sed -i 's/172.17.0.1/127.0.0.1/g' behat.yml.dist
+  - composer test
