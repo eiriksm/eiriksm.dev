@@ -36,7 +36,7 @@ jobs:
         run: composer --verbose install
 
       - name: Download the DISQUS xml
-        run: wget ${{ secrets.$DISQUS_XML_URL }} -O disqus.xml
+        run: wget ${{ secrets.DISQUS_XML_URL }} -O disqus.xml
 
       - name: Install node dependencies
         run: npm i
