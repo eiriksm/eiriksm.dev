@@ -18,6 +18,11 @@ jobs:
         with:
           php-version: "7.4"
 
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "14"
+
       - name: Update composer
         run: composer --verbose self-update
 
