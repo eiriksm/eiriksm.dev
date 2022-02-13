@@ -9,7 +9,7 @@ addons:
 
 env:
   - TRAVIS_NODE_VERSION="12"
-  - BEHAT_PARAMS="{\"extensions\": {\"Behat\\\\MinkExtension\":{\"base_url\": \"http://127.0.0.1:9001\"}}}"
+  - BEHAT_PARAMS="{\"extensions\":{\"Behat\\\\MinkExtension\":{\"base_url\":\"http://localhost:9000\"}}}"
 
 matrix:
   fast_finish: true
