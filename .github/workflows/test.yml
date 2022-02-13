@@ -53,7 +53,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start the serving of the site
-        run: npm run serve -H 0.0.0.0 &
+        run: ./node_modules/.bin/gatsby serve -H 0.0.0.0 &
 
       - name: Make sure serving has started
         run: ./vendor/bin/wait-for-listen 9000
