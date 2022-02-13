@@ -10,6 +10,8 @@ jobs:
     services:
       chromedriver:
         image: nymediaas/chrome-headless:89
+        ports:
+          - 8643:8643
     strategy:
       fail-fast: false
     steps:

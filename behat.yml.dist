@@ -20,7 +20,7 @@ default:
       base_url: http://172.17.0.1:9000
       goutte: ~
       selenium2:
-        wd_host: http://chromedriver:8643/wd/hub
+        wd_host: http://127.0.0.1:8643/wd/hub
         capabilities:
           chrome:
             switches:
