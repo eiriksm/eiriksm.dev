@@ -1,0 +1,3 @@
+[build]
+  publish = "public"
+  command = "npm i && npm run build"
