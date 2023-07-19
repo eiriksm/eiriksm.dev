@@ -28,7 +28,7 @@
     "gatsby-transformer-sharp": "^2.3.3",
     "lodash.clone": "^4.5.0",
     "node-emoji": "^1.10.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.7",
     "patch-package": "^6.2.2",
     "postcss-loader": "^3.0.0",
     "precss": "^4.0.0",
