@@ -3,6 +3,13 @@ FROM node:16-alpine
 RUN apk -v --update add \
         python3 \
         make \
+        vips-dev \
+        autoconf \
+        automake \
+        libtool \
+        nasm \
+        g++ \
+        gcc \
         py-pip \
         groff \
         less \
