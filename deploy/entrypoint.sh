@@ -8,7 +8,7 @@ npm i
 npm run build
 echo $DEPLOY
 exit 0
-if [ -z "${DEPLOY}" ]; then
+if [ "$DEPLOY" == "0" ]
     echo "No deploy since DEPLOY is not set to true"
 else
     npm run deploy

@@ -17,8 +17,11 @@ jobs:
       - name: Set environment for branch
         run: |
           if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
-              echo "DEPLOY=1" >> "$GITHUB_ENV"
+            echo "DEPLOY=1" >> "$GITHUB_ENV"
+          else
+            echo "DEPLOY=0" >> "$GITHUB_ENV"
           fi
+
       - uses: ./deploy/
         env:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
