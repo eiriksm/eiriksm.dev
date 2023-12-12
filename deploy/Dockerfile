@@ -1,7 +1,15 @@
-FROM alpine:3.9
+FROM node:16-alpine3.15
 
 RUN apk -v --update add \
-        python \
+        python3 \
+        make \
+        vips-dev \
+        autoconf \
+        automake \
+        libtool \
+        nasm \
+        g++ \
+        gcc \
         py-pip \
         groff \
         less \
