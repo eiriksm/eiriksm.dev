@@ -1,4 +1,4 @@
-FROM node:16-alpine3.15
+FROM node:18-alpine3.18
 
 RUN apk -v --update add \
         python3 \
@@ -17,7 +17,7 @@ RUN apk -v --update add \
         npm \
         mailcap \
         && \
-    pip install --upgrade awscli==1.14.5 s3cmd==2.0.1 python-magic && \
+    pip install --upgrade awscli==1.14.5 s3cmd==2.0.1 python-magic six && \
     apk -v --purge del py-pip
 
 ENV NODE_ENV production

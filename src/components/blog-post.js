@@ -152,7 +152,7 @@ export default class BlogPost extends React.Component {
       post.relationships.field_image.localFile
     ) {
       img = (
-        <div className="img player" onClick={this.handleImageClick.bind(this)}>
+        <div role="presentation" className="img player" onKeyDown={this.handleImageClick.bind(this)} onClick={this.handleImageClick.bind(this)}>
           <div className="text">Play</div>
         </div>
       )
