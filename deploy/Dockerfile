@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:16-alpine3.15
 
 RUN apk -v --update add \
         python3 \
