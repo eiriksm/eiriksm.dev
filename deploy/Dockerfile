@@ -1,4 +1,4 @@
-FROM alpine:3.9
+FROM node:16
 
 RUN apk -v --update add \
         python \
