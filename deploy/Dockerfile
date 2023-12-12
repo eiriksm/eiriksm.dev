@@ -1,7 +1,6 @@
 FROM node:16-alpine
 
 RUN apk -v --update add \
-        python \
         py-pip \
         groff \
         less \
