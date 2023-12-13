@@ -17,7 +17,7 @@ RUN apk -v --update add \
         npm \
         mailcap \
         && \
-    pip install --upgrade awscli==1.14.5 s3cmd==2.0.1 python-magic six && \
+    pip install --upgrade awscli==1.31.13 s3cmd==2.0.1 python-magic six dateutils && \
     apk -v --purge del py-pip
 
 ENV NODE_ENV production
