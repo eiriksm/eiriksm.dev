@@ -27,7 +27,10 @@ function Comments({ comments, issueId }) {
         var promise = util.promisify(remark()
           .use(html)
           .process)
-        body = await promise(body)
+        const notherBody = await promise(body)
+        if (notherBody.contents) {
+          body = notherBody
+        }
         return (
           <div key={comment.commentId} className="my-2 border-b-2">
             <p className="text-xs">
