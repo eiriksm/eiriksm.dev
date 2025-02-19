@@ -81,8 +81,8 @@ class FeatureContext extends RawDrupalContext {
     $element = $page->find('css', $selector);
     if ($element->getText() != $this->textContents[$name]) {
       var_dump([
-        'stored' => $this->textContents[$name],
-        'new' => $element->getText(),
+        'stored' => trim($this->textContents[$name]),
+        'new' => trim($element->getText()),
       ]);
       throw new \Exception('Text did not equal stored text');
     }
