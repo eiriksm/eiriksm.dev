@@ -8,14 +8,6 @@ const nextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/planet',
-        destination: '/api/rss',
-      },
-    ]
-  },
 }
 
 module.exports = nextConfig
