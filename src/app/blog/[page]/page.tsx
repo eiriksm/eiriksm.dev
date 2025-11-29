@@ -30,6 +30,13 @@ export default async function BlogPage({ params }: BlogPageProps) {
     }
   )
 
+  // Sort by created date descending (newest first) as a fallback
+  allNodes.sort((a: any, b: any) => {
+    const dateA = typeof a.created === 'number' ? a.created : 0
+    const dateB = typeof b.created === 'number' ? b.created : 0
+    return dateB - dateA // Descending order
+  })
+
   const totalPosts = allNodes.length
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
 
