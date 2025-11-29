@@ -23,13 +23,6 @@ export default async function HomePage() {
     console.error('Failed to fetch posts:', error)
   }
 
-  // Sort by created date descending (newest first) as a fallback
-  allNodes.sort((a, b) => {
-    const dateA = typeof a.created === 'number' ? a.created : 0
-    const dateB = typeof b.created === 'number' ? b.created : 0
-    return dateB - dateA // Descending order
-  })
-
   // Calculate pagination based on all posts
   const totalPosts = allNodes.length
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
