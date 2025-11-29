@@ -1,0 +1,160 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { formatDate } from "@/lib/utils"
+
+interface Comment {
+  id: number
+  user: {
+    login: string
+    avatar_url: string
+    html_url: string
+  }
+  created_at: string
+  body: string
+  html_url: string
+}
+
+interface CommentsProps {
+  issueId: string
+}
+
+export default function Comments({ issueId }: CommentsProps) {
+  const [comments, setComments] = useState<Comment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const repo = process.env.NEXT_PUBLIC_GITHUB_REPO
+        if (!repo) {
+          setError("GitHub repository not configured")
+          setLoading(false)
+          return
+        }
+
+        const response = await fetch(
+          `https://api.github.com/repos/${repo}/issues/${issueId}/comments`,
+          {
+            headers: process.env.GITHUB_TOKEN
+              ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
+              : {},
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch comments")
+        }
+
+        const data = await response.json()
+        setComments(data)
+      } catch (err) {
+        setError("Failed to load comments")
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchComments()
+  }, [issueId])
+
+  if (loading) {
+    return (
+      <div className="mt-12 pt-8 border-t border-gray-200">
+        <h2 className="text-2xl font-bold mb-6">Comments</h2>
+        <div className="text-gray-500">Loading comments...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="mt-12 pt-8 border-t border-gray-200">
+        <h2 className="text-2xl font-bold mb-6">Comments</h2>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <p className="text-gray-700 mb-4">
+            Comments for this post are hosted on GitHub Issues.
+          </p>
+          <a
+            href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO}/issues/${issueId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            View Comments on GitHub →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-12 pt-8 border-t border-gray-200">
+      <h2 className="text-2xl font-bold mb-6">
+        Comments ({comments.length})
+      </h2>
+
+      {comments.length === 0 ? (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <p className="text-gray-700 mb-4">
+            No comments yet. Be the first to comment on GitHub!
+          </p>
+          <a
+            href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO}/issues/${issueId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Add Comment on GitHub →
+          </a>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {comments.map((comment) => (
+            <div key={comment.id} className="comment">
+              <div className="flex items-start space-x-4">
+                <img
+                  src={comment.user.avatar_url}
+                  alt={comment.user.login}
+                  className="w-10 h-10 rounded-full"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <a
+                      href={comment.user.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="comment-author hover:text-blue-600"
+                    >
+                      {comment.user.login}
+                    </a>
+                    <span className="comment-date">
+                      {formatDate(comment.created_at)}
+                    </span>
+                  </div>
+                  <div
+                    className="comment-body prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: comment.body }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="mt-6">
+            <a
+              href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO}/issues/${issueId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Add Comment on GitHub →
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
