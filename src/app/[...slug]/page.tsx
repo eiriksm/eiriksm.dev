@@ -5,6 +5,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import Comments from "@/components/Comments"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -143,12 +144,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
 export async function generateStaticParams() {
   try {
+    const apiParams = new DrupalJsonApiParams()
+    apiParams.addSort("created", "DESC")
+
     const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
       "node--article",
       {
-        params: {
-          "sort": "-created",
-        },
+        params: apiParams.getQueryObject(),
       }
     )
 

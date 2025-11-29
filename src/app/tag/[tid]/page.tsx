@@ -3,6 +3,7 @@ import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 interface TagPageProps {
   params: Promise<{
@@ -50,13 +51,14 @@ export default async function TagPage({ params }: TagPageProps) {
   }
 
   // Fetch all articles
+  const apiParams = new DrupalJsonApiParams()
+  apiParams.addSort("created", "DESC")
+  apiParams.addInclude(["field_tags"])
+
   const allNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
     "node--article",
     {
-      params: {
-        "sort": "-created",
-        "include": "field_tags",
-      },
+      params: apiParams.getQueryObject(),
     }
   )
 

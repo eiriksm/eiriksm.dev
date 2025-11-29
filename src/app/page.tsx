@@ -2,6 +2,7 @@ import { drupal } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 const POSTS_PER_PAGE = 10
 
@@ -10,12 +11,13 @@ export default async function HomePage() {
 
   try {
     // Fetch all posts to get accurate count and proper pagination
+    const apiParams = new DrupalJsonApiParams()
+    apiParams.addSort("created", "DESC")
+
     const fetchedNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
       "node--article",
       {
-        params: {
-          "sort": "-created",
-        },
+        params: apiParams.getQueryObject(),
       }
     )
     allNodes = fetchedNodes as unknown as any[]

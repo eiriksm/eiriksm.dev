@@ -3,6 +3,7 @@ import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
 import { notFound } from "next/navigation"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 const POSTS_PER_PAGE = 10
 
@@ -21,12 +22,13 @@ export default async function BlogPage({ params }: BlogPageProps) {
   }
 
   // Fetch all nodes to get total count
+  const apiParams = new DrupalJsonApiParams()
+  apiParams.addSort("created", "DESC")
+
   const allNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
     "node--article",
     {
-      params: {
-        "sort": "-created",
-      },
+      params: apiParams.getQueryObject(),
     }
   )
 
@@ -60,12 +62,13 @@ export default async function BlogPage({ params }: BlogPageProps) {
 
 export async function generateStaticParams() {
   try {
+    const apiParams = new DrupalJsonApiParams()
+    apiParams.addSort("created", "DESC")
+
     const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
       "node--article",
       {
-        params: {
-          "sort": "-created",
-        },
+        params: apiParams.getQueryObject(),
       }
     )
 
