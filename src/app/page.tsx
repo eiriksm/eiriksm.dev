@@ -6,25 +6,29 @@ import Pagination from "@/components/Pagination"
 const POSTS_PER_PAGE = 10
 
 export default async function HomePage() {
-  let nodes: any[] = []
+  let allNodes: any[] = []
 
   try {
+    // Fetch all posts to get accurate count and proper pagination
     const fetchedNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
       "node--article",
       {
         params: {
           "sort": "-created",
-          "page[limit]": String(POSTS_PER_PAGE),
         },
       }
     )
-    nodes = fetchedNodes as unknown as any[]
+    allNodes = fetchedNodes as unknown as any[]
   } catch (error) {
     console.error('Failed to fetch posts:', error)
   }
 
-  const totalPosts = nodes.length
+  // Calculate pagination based on all posts
+  const totalPosts = allNodes.length
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
+
+  // Show only first page of posts
+  const nodes = allNodes.slice(0, POSTS_PER_PAGE)
 
   return (
     <div className="max-w-4xl mx-auto">

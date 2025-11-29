@@ -21,7 +21,7 @@ export default function BlogPostCard({ node }: BlogPostCardProps) {
         </h2>
 
         <div className="text-sm text-gray-500 mb-4">
-          <time dateTime={new Date(node.created).toISOString()}>
+          <time dateTime={new Date(node.created * 1000).toISOString()}>
             {formatDate(node.created)}
           </time>
         </div>

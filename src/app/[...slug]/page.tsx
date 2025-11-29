@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
         description: excerpt,
         url: url,
         type: "article",
-        publishedTime: new Date(node.created).toISOString(),
+        publishedTime: new Date(node.created * 1000).toISOString(),
         authors: ["Eirik S. Morland"],
       },
       twitter: {
@@ -87,7 +87,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           {node.title}
         </h1>
         <div className="flex items-center text-gray-600 text-sm space-x-4">
-          <time dateTime={new Date(node.created).toISOString()}>
+          <time dateTime={new Date(node.created * 1000).toISOString()}>
             {formatDate(node.created)}
           </time>
         </div>
@@ -124,7 +124,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             "@context": "https://schema.org",
             "@type": "BlogPosting",
             headline: node.title,
-            datePublished: new Date(node.created).toISOString(),
+            datePublished: new Date(node.created * 1000).toISOString(),
             author: {
               "@type": "Person",
               name: "Eirik S. Morland",
