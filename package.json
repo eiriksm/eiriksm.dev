@@ -13,11 +13,13 @@
     "deploy": "aws s3 sync out/ s3://eiriksm.dev --delete --cache-control 'public,max-age=31536000,immutable' --exclude '*.html' && aws s3 sync out/ s3://eiriksm.dev --delete --cache-control 'public,max-age=0,must-revalidate' --exclude '*' --include '*.html'"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/typography": "^0.5.15",
     "date-fns": "^4.1.0",
     "drupal-jsonapi-params": "^3.0.0",
     "next": "^16.0.0",
     "next-drupal": "^1.6.0",
+    "postcss": "^8.4.49",
     "prismjs": "^1.29.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

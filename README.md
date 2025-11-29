@@ -9,14 +9,14 @@ A modern blog built with Next.js 16, Tailwind CSS, and Drupal integration.
 ## Features
 
 - 🚀 **Next.js 16** with App Router
-- 🎨 **Tailwind CSS** for styling
+- 🎨 **Tailwind CSS v4** for styling with modern CSS-first configuration
 - 📝 **Drupal Integration** via next-drupal
 - 💬 **GitHub Issues Comments** integration
 - 🔍 **SEO Optimized** with metadata and structured data
 - 📱 **Responsive Design**
 - 📊 **Google Analytics** support
 - 🗺️ **Sitemap & RSS Feed** generation
-- ⚡ **Static Generation** with ISR
+- ⚡ **Static Export** for S3 deployment
 
 ## Getting Started
 
@@ -49,9 +49,20 @@ Open [http://localhost:3000](http://localhost:3000) to see the result.
 
 ### Build for Production
 
+**Important:** The production build requires access to your Drupal API to generate static pages. Make sure your `.env.local` (or environment variables) include:
+- `NEXT_PUBLIC_DRUPAL_BASE_URL` - Your Drupal site URL
+- `BASIC_AUTH_USERNAME` - Basic auth username (if your Drupal site is protected)
+- `BASIC_AUTH_PASSWORD` - Basic auth password (if your Drupal site is protected)
+
 ```bash
 npm run build
-npm start
+```
+
+This creates a static export in the `out/` directory ready for deployment to S3 or any static hosting.
+
+For local preview of the static build:
+```bash
+npx serve out
 ```
 
 ## Project Structure
