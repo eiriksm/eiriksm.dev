@@ -1,5 +1,5 @@
 {
-  "buildCommand": "next build && next export",
+  "buildCommand": "next build",
   "outputDirectory": "out",
   "framework": null
 }
