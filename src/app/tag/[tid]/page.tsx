@@ -102,6 +102,9 @@ export async function generateStaticParams() {
       tid: term.drupal_internal__tid?.toString() || term.id,
     }))
   } catch (error) {
+    console.warn('Failed to generate static params for tags:', error)
     return []
   }
 }
+
+export const dynamicParams = true

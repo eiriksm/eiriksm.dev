@@ -3,26 +3,34 @@ import { drupal } from '@/lib/drupal'
 import { DrupalNode } from 'next-drupal'
 import { getNodePath } from '@/lib/utils'
 
+export const revalidate = 3600 // Revalidate every hour
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://eiriksm.dev'
 
-  // Fetch all articles
-  const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
-    'node--article',
-    {
-      params: {
-        'sort': '-created',
-      },
-    }
-  )
+  let articles: MetadataRoute.Sitemap = []
 
-  // Generate sitemap entries for articles
-  const articles = nodes.map((node) => ({
-    url: `${baseUrl}${getNodePath(node)}`,
-    lastModified: new Date(node.changed || node.created),
-    changeFrequency: 'monthly' as const,
-    priority: 0.8,
-  }))
+  try {
+    // Fetch all articles
+    const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+      'node--article',
+      {
+        params: {
+          'sort': '-created',
+        },
+      }
+    )
+
+    // Generate sitemap entries for articles
+    articles = nodes.map((node) => ({
+      url: `${baseUrl}${getNodePath(node)}`,
+      lastModified: new Date(node.changed || node.created),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch articles for sitemap:', error)
+  }
 
   // Static pages
   const staticPages = [

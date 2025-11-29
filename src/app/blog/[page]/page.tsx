@@ -59,21 +59,28 @@ export default async function BlogPage({ params }: BlogPageProps) {
 }
 
 export async function generateStaticParams() {
-  const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
-    "node--article",
-    {
-      params: {
-        "sort": "-created",
-      },
+  try {
+    const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+      "node--article",
+      {
+        params: {
+          "sort": "-created",
+        },
+      }
+    )
+
+    const totalPages = Math.ceil(nodes.length / POSTS_PER_PAGE)
+    const pages = []
+
+    for (let i = 2; i <= totalPages; i++) {
+      pages.push({ page: i.toString() })
     }
-  )
 
-  const totalPages = Math.ceil(nodes.length / POSTS_PER_PAGE)
-  const pages = []
-
-  for (let i = 2; i <= totalPages; i++) {
-    pages.push({ page: i.toString() })
+    return pages
+  } catch (error) {
+    console.warn('Failed to generate static params for blog pagination:', error)
+    return []
   }
-
-  return pages
 }
+
+export const dynamicParams = true

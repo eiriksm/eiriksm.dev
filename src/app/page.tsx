@@ -6,15 +6,22 @@ import Pagination from "@/components/Pagination"
 const POSTS_PER_PAGE = 10
 
 export default async function HomePage() {
-  const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
-    "node--article",
-    {
-      params: {
-        "sort": "-created",
-        "page[limit]": String(POSTS_PER_PAGE),
-      },
-    }
-  )
+  let nodes: any[] = []
+
+  try {
+    const fetchedNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+      "node--article",
+      {
+        params: {
+          "sort": "-created",
+          "page[limit]": String(POSTS_PER_PAGE),
+        },
+      }
+    )
+    nodes = fetchedNodes as unknown as any[]
+  } catch (error) {
+    console.error('Failed to fetch posts:', error)
+  }
 
   const totalPosts = nodes.length
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)

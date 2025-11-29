@@ -142,18 +142,25 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 }
 
 export async function generateStaticParams() {
-  const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
-    "node--article",
-    {
-      params: {
-        "sort": "-created",
-      },
-    }
-  )
+  try {
+    const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+      "node--article",
+      {
+        params: {
+          "sort": "-created",
+        },
+      }
+    )
 
-  return nodes.map((node) => {
-    const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
-    const slug = path.split("/").filter(Boolean)
-    return { slug }
-  })
+    return nodes.map((node) => {
+      const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
+      const slug = path.split("/").filter(Boolean)
+      return { slug }
+    })
+  } catch (error) {
+    console.warn('Failed to generate static params for blog posts:', error)
+    return []
+  }
 }
+
+export const dynamicParams = true
