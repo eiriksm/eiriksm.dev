@@ -11,7 +11,7 @@ export default function Pagination({ currentPage, totalPages, basePath = "/blog"
 
   const getPagePath = (page: number) => {
     if (page === 1) return "/"
-    return `${basePath}/${page}`
+    return `${basePath}/${page}/`
   }
 
   return (

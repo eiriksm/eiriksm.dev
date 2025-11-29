@@ -98,7 +98,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {tags.map((tag: any) => (
               <Link
                 key={tag.id}
-                href={`/tag/${tag.drupal_internal__tid}`}
+                href={`/tag/${tag.drupal_internal__tid}/`}
                 className="tag"
               >
                 {tag.name}
@@ -146,6 +146,7 @@ export async function generateStaticParams() {
   try {
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
+    apiParams.addInclude(["field_tags", "field_image"])
 
     const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
       "node--article",

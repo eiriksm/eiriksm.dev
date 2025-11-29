@@ -37,7 +37,7 @@ export default function BlogPostCard({ node }: BlogPostCardProps) {
             {tags.map((tag: any) => (
               <Link
                 key={tag.id}
-                href={`/tag/${tag.drupal_internal__tid}`}
+                href={`/tag/${tag.drupal_internal__tid}/`}
                 className="tag"
               >
                 {tag.name}

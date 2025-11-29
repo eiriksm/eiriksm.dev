@@ -17,7 +17,8 @@ export function absoluteUrl(input: string) {
 
 export function getNodePath(node: DrupalNode): string {
   const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
-  return path
+  // Ensure trailing slash for static export compatibility
+  return path.endsWith('/') ? path : `${path}/`
 }
 
 export function extractExcerpt(body: string, maxLength: number = 200): string {
