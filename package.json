@@ -12,7 +12,7 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
   },
   "dependencies": {
-    "next": "^15.0.3",
+    "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "next-drupal": "^1.6.0",
@@ -31,6 +31,6 @@
     "typescript": "^5.6.3",
     "prettier": "^3.3.3",
     "eslint": "^9.14.0",
-    "eslint-config-next": "^15.0.3"
+    "eslint-config-next": "^16.0.0"
   }
 }

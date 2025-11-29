@@ -4,11 +4,11 @@
 [![Test](https://github.com/eiriksm/eiriksm.dev/actions/workflows/test.yml/badge.svg)](https://github.com/eiriksm/eiriksm.dev/actions/workflows/test.yml)
 [![Violinist enabled](https://img.shields.io/badge/violinist-enabled-brightgreen.svg)](https://violinist.io)
 
-A modern blog built with Next.js 15, Tailwind CSS, and Drupal integration.
+A modern blog built with Next.js 16, Tailwind CSS, and Drupal integration.
 
 ## Features
 
-- 🚀 **Next.js 15** with App Router
+- 🚀 **Next.js 16** with App Router
 - 🎨 **Tailwind CSS** for styling
 - 📝 **Drupal Integration** via next-drupal
 - 💬 **GitHub Issues Comments** integration
