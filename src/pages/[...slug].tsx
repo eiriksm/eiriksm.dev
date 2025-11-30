@@ -135,22 +135,37 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params }) => {
   const slug = params?.slug as string[]
-  const path = `/${slug.join("/")}`
+  const basePath = `/${slug.join("/")}`
+  const candidatePaths = Array.from(
+    new Set([
+      basePath,
+      basePath.endsWith("/") ? basePath.slice(0, -1) : `${basePath}/`,
+    ])
+  )
 
   try {
-    console.log(`[getStaticProps] Fetching blog post for path: ${path}`)
+    let node: DrupalNode | null = null
 
-    const node = await drupal.getResourceByPath<DrupalNode>(
-      path,
-      {
+    for (const path of candidatePaths) {
+      console.log(`[getStaticProps] Fetching blog post for path: ${path}`)
+
+      node = await drupal.getResourceByPath<DrupalNode>(path, {
         params: {
           "include": "field_tags,field_image",
         },
+      })
+
+      if (node) {
+        break
       }
-    )
+
+      console.warn(`[getStaticProps] No node found for path: ${path}`)
+    }
 
     if (!node) {
-      console.error(`[getStaticProps] No node found for path: ${path}`)
+      console.error(
+        `[getStaticProps] No node found for any candidate paths: ${candidatePaths.join(", ")}`
+      )
       return {
         notFound: true,
       }
@@ -164,7 +179,10 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
       },
     }
   } catch (error) {
-    console.error(`[getStaticProps] Error fetching blog post for ${path}:`, error)
+    console.error(
+      `[getStaticProps] Error fetching blog post for ${basePath}:`,
+      error
+    )
     return {
       notFound: true,
     }
