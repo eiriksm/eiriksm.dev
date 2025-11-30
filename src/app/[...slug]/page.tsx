@@ -25,10 +25,10 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       return {}
     }
 
-    // Fetch the resource
+    // Fetch the resource using entity.type and entity.uuid from translatePath
     const node = await drupal.getResource<DrupalNode>(
-      resource.type,
-      resource.id,
+      resource.entity.type,
+      resource.entity.uuid,
       {
         params: {
           "include": "field_tags,field_image",
@@ -80,10 +80,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       notFound()
     }
 
-    // Fetch the resource using the translated path
+    // Fetch the resource using entity.type and entity.uuid from translatePath
     node = await drupal.getResource<DrupalNode>(
-      resource.type,
-      resource.id,
+      resource.entity.type,
+      resource.entity.uuid,
       {
         params: {
           "include": "field_tags,field_image",
