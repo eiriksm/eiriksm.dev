@@ -18,17 +18,9 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const path = `/${slug.join("/")}`
 
   try {
-    // Translate path to get resource type and UUID
-    const resource = await drupal.translatePath(path)
-
-    if (!resource) {
-      return {}
-    }
-
-    // Fetch the resource using entity.type and entity.uuid from translatePath
-    const node = await drupal.getResource<DrupalNode>(
-      resource.entity.type,
-      resource.entity.uuid,
+    // Use getResourceByPath instead of translatePath + getResource
+    const node = await drupal.getResourceByPath<DrupalNode>(
+      path,
       {
         params: {
           "include": "field_tags,field_image",
@@ -73,17 +65,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   let node: DrupalNode
 
   try {
-    // Translate path to get resource type and UUID
-    const resource = await drupal.translatePath(path)
-
-    if (!resource) {
-      notFound()
-    }
-
-    // Fetch the resource using entity.type and entity.uuid from translatePath
-    node = await drupal.getResource<DrupalNode>(
-      resource.entity.type,
-      resource.entity.uuid,
+    // Use getResourceByPath instead of translatePath + getResource
+    // This is more direct and avoids the /router/translate-path endpoint
+    node = await drupal.getResourceByPath<DrupalNode>(
+      path,
       {
         params: {
           "include": "field_tags,field_image",
