@@ -25,13 +25,17 @@ export default async function BlogPage({ params }: BlogPageProps) {
   const apiParams = new DrupalJsonApiParams()
   apiParams.addSort("created", "DESC")
 
-  // Use getResourceCollection for App Router
-  const allNodes = await drupal.getResourceCollection<DrupalNode>(
-    "node--article",
-    {
-      params: apiParams.getQueryObject(),
-    }
+  // Use getResourceCollection for App Router, then sort to ensure newest first
+  const allNodes = (
+    await drupal.getResourceCollection<DrupalNode>(
+      "node--article",
+      {
+        params: apiParams.getQueryObject(),
+      }
+    )
   )
+    .slice()
+    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
 
   const totalPosts = allNodes.length
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
@@ -66,13 +70,17 @@ export async function generateStaticParams() {
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
 
-    // Use getResourceCollection for App Router
-    const nodes = await drupal.getResourceCollection<DrupalNode>(
-      "node--article",
-      {
-        params: apiParams.getQueryObject(),
-      }
+    // Use getResourceCollection for App Router, then sort to ensure newest first
+    const nodes = (
+      await drupal.getResourceCollection<DrupalNode>(
+        "node--article",
+        {
+          params: apiParams.getQueryObject(),
+        }
+      )
     )
+      .slice()
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
 
     const totalPages = Math.ceil(nodes.length / POSTS_PER_PAGE)
     const pages = []

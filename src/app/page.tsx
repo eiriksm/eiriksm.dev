@@ -21,7 +21,9 @@ export default async function HomePage() {
         params: apiParams.getQueryObject(),
       }
     )
-    allNodes = fetchedNodes as unknown as any[]
+    allNodes = (fetchedNodes as unknown as any[])
+      .slice()
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
   } catch (error) {
     console.error('Failed to fetch posts:', error)
   }
