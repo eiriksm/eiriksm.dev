@@ -14,7 +14,7 @@ export default function BlogPostCard({ node }: BlogPostCardProps) {
   return (
     <article className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-3">
+        <h2 className="node__title text-2xl font-bold mb-3">
           <Link href={path} className="text-gray-900 hover:text-blue-600 transition-colors">
             {node.title}
           </Link>
