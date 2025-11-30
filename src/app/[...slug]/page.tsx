@@ -18,8 +18,17 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const path = `/${slug.join("/")}`
 
   try {
-    const node = await drupal.getResourceFromContext<DrupalNode>(
-      path,
+    // Translate path to get resource type and UUID
+    const resource = await drupal.translatePath(path)
+
+    if (!resource) {
+      return {}
+    }
+
+    // Fetch the resource
+    const node = await drupal.getResource<DrupalNode>(
+      resource.type,
+      resource.id,
       {
         params: {
           "include": "field_tags,field_image",
@@ -52,6 +61,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       },
     }
   } catch (error) {
+    console.error('Error generating metadata:', error)
     return {}
   }
 }
@@ -63,8 +73,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   let node: DrupalNode
 
   try {
-    node = await drupal.getResourceFromContext<DrupalNode>(
-      path,
+    // Translate path to get resource type and UUID
+    const resource = await drupal.translatePath(path)
+
+    if (!resource) {
+      notFound()
+    }
+
+    // Fetch the resource using the translated path
+    node = await drupal.getResource<DrupalNode>(
+      resource.type,
+      resource.id,
       {
         params: {
           "include": "field_tags,field_image",
@@ -72,6 +91,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       }
     )
   } catch (error) {
+    console.error('Error fetching blog post:', error)
     notFound()
   }
 
@@ -148,7 +168,8 @@ export async function generateStaticParams() {
     apiParams.addSort("created", "DESC")
     apiParams.addInclude(["field_tags", "field_image"])
 
-    const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+    // Use getResourceCollection instead of getResourceCollectionFromContext for App Router
+    const nodes = await drupal.getResourceCollection<DrupalNode>(
       "node--article",
       {
         params: apiParams.getQueryObject(),

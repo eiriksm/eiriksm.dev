@@ -25,7 +25,8 @@ export default async function BlogPage({ params }: BlogPageProps) {
   const apiParams = new DrupalJsonApiParams()
   apiParams.addSort("created", "DESC")
 
-  const allNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+  // Use getResourceCollection for App Router
+  const allNodes = await drupal.getResourceCollection<DrupalNode>(
     "node--article",
     {
       params: apiParams.getQueryObject(),
@@ -65,7 +66,8 @@ export async function generateStaticParams() {
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
 
-    const nodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+    // Use getResourceCollection for App Router
+    const nodes = await drupal.getResourceCollection<DrupalNode>(
       "node--article",
       {
         params: apiParams.getQueryObject(),

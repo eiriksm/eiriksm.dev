@@ -14,7 +14,8 @@ export default async function HomePage() {
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
 
-    const fetchedNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+    // Use getResourceCollection for App Router
+    const fetchedNodes = await drupal.getResourceCollection<DrupalNode>(
       "node--article",
       {
         params: apiParams.getQueryObject(),

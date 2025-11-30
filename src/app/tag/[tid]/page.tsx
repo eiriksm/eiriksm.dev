@@ -55,7 +55,8 @@ export default async function TagPage({ params }: TagPageProps) {
   apiParams.addSort("created", "DESC")
   apiParams.addInclude(["field_tags"])
 
-  const allNodes = await drupal.getResourceCollectionFromContext<DrupalNode>(
+  // Use getResourceCollection for App Router
+  const allNodes = await drupal.getResourceCollection<DrupalNode>(
     "node--article",
     {
       params: apiParams.getQueryObject(),
