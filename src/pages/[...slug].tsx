@@ -1,7 +1,7 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
 import Link from "next/link"
-import { drupal } from "@/lib/drupal"
+import { drupal, getAllResources } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import { formatDate, absoluteUrl } from "@/lib/utils"
 import Comments from "@/components/Comments"
@@ -101,11 +101,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
     apiParams.addSort("created", "DESC")
     apiParams.addInclude(["field_tags", "field_image"])
 
-    const nodes = await drupal.getResourceCollection<DrupalNode>(
+    const nodes = await getAllResources<DrupalNode>(
       "node--article",
-      {
-        params: apiParams.getQueryObject(),
-      }
+      apiParams
     )
 
     console.log(`[getStaticPaths] Found ${nodes.length} blog posts`)
