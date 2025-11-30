@@ -13,6 +13,9 @@ interface BlogPostPageProps {
   }>
 }
 
+export const dynamic = "force-static";
+export const dynamicParams = false;
+
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params
   const path = `/${slug.join("/")}`
