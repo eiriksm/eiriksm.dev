@@ -1,7 +1,13 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
 import Link from "next/link"
-import { drupal, getAllResources } from "@/lib/drupal"
+import {
+  addNodesToPathUuidMap,
+  drupal,
+  ensurePathUuidMap,
+  getAllResources,
+  normalizePath,
+} from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import { formatDate, absoluteUrl } from "@/lib/utils"
 import Comments from "@/components/Comments"
@@ -119,6 +125,8 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
     console.log(`[getStaticPaths] Total paths generated: ${paths.length}`)
 
+    addNodesToPathUuidMap(nodes)
+
     return {
       paths,
       fallback: false, // 404 for any paths not returned by getStaticPaths
@@ -181,41 +189,34 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
 
     if (!node) {
       console.warn(
-        `[getStaticProps] No node found via direct path fetch. Trying collection fallback...`
+        `[getStaticProps] No node found via direct path fetch. Trying map-based fallback...`
       )
 
-      const params = new DrupalJsonApiParams()
-      params.addInclude(["field_tags", "field_image"])
-
-      const articles = await getAllResources<DrupalNode>(
-        "node--article",
-        params
-      )
-
-      const normalizePath = (value: string | undefined) => {
-        if (!value) return ""
-        const ensured = value.startsWith("/") ? value : `/${value}`
-        return ensured.endsWith("/") ? ensured.slice(0, -1) : ensured
-      }
-
+      const pathMap = await ensurePathUuidMap()
       const normalizedCandidates = candidatePaths.map(normalizePath)
+      const matchedUuid = normalizedCandidates
+        .map((candidate) => pathMap[candidate])
+        .find(Boolean)
 
-      const found = articles.find((article) => {
-        const alias = normalizePath(article.path?.alias)
-        const nidPath = normalizePath(`/node/${article.drupal_internal__nid}`)
-        return (
-          normalizedCandidates.includes(alias) ||
-          normalizedCandidates.includes(nidPath)
+      if (matchedUuid) {
+        console.log(
+          `[getStaticProps] Found UUID ${matchedUuid} for candidate paths ${normalizedCandidates.join(", ")}`
         )
-      }) as DrupalNode | undefined
 
-      if (found) {
-        node = found
+        node = await drupal.getResource<DrupalNode>(
+          "node--article",
+          matchedUuid,
+          {
+            params: {
+              include: "field_tags,field_image",
+            },
+          }
+        )
       }
 
       if (node) {
         console.log(
-          `[getStaticProps] Found node via fallback collection search: ${node.title}`
+          `[getStaticProps] Loaded node via map fallback: ${node.title}`
         )
       }
     }

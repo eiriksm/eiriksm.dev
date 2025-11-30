@@ -1,7 +1,13 @@
-import { DrupalClient } from "next-drupal"
+import { promises as fs } from "fs"
+import path from "path"
+import { DrupalClient, DrupalNode } from "next-drupal"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 const DEFAULT_PAGE_SIZE = 50
+const PATH_UUID_MAP_FILE = path.join(process.cwd(), ".cache", "path-uuid-map.json")
+
+type PathUuidMap = Record<string, string>
+let cachedPathUuidMap: PathUuidMap | null = null
 
 const drupalConfig: any = {}
 
@@ -64,3 +70,79 @@ export async function getAllResources<TResource>(
 
   return allResources
 }
+
+const normalizePath = (value: string | undefined) => {
+  if (!value) return ""
+  const ensured = value.startsWith("/") ? value : `/${value}`
+  return ensured.endsWith("/") ? ensured.slice(0, -1) : ensured
+}
+
+function buildPathUuidMap(nodes: DrupalNode[]): PathUuidMap {
+  const map: PathUuidMap = {}
+
+  nodes.forEach((node) => {
+    const alias = normalizePath((node as any)?.path?.alias)
+    const nidPath = normalizePath(`/node/${(node as any).drupal_internal__nid}`)
+
+    if (alias) {
+      map[alias] = node.id
+    }
+
+    if (nidPath) {
+      map[nidPath] = node.id
+    }
+  })
+
+  return map
+}
+
+async function loadPathUuidMapFromDisk(): Promise<PathUuidMap> {
+  if (cachedPathUuidMap) {
+    return cachedPathUuidMap
+  }
+
+  try {
+    const data = await fs.readFile(PATH_UUID_MAP_FILE, "utf8")
+    cachedPathUuidMap = JSON.parse(data)
+    return cachedPathUuidMap
+  } catch (error: any) {
+    if (error?.code !== "ENOENT") {
+      console.warn("[drupal] Failed to read path UUID map:", error)
+    }
+    return {}
+  }
+}
+
+async function persistPathUuidMap(map: PathUuidMap) {
+  await fs.mkdir(path.dirname(PATH_UUID_MAP_FILE), { recursive: true })
+  await fs.writeFile(PATH_UUID_MAP_FILE, JSON.stringify(map, null, 2), "utf8")
+  cachedPathUuidMap = map
+}
+
+export async function ensurePathUuidMap(
+  nodes?: DrupalNode[]
+): Promise<PathUuidMap> {
+  const existing = await loadPathUuidMapFromDisk()
+  if (Object.keys(existing).length) {
+    return existing
+  }
+
+  const sourceNodes =
+    nodes || (await getAllResources<DrupalNode>("node--article"))
+  const map = buildPathUuidMap(sourceNodes)
+  await persistPathUuidMap(map)
+
+  return map
+}
+
+export function addNodesToPathUuidMap(nodes: DrupalNode[]) {
+  const freshMap = buildPathUuidMap(nodes)
+
+  // Merge with any existing cached map to avoid losing entries across calls.
+  const mergedMap = { ...(cachedPathUuidMap || {}), ...freshMap }
+  persistPathUuidMap(mergedMap).catch((error) => {
+    console.warn("[drupal] Failed to persist path UUID map:", error)
+  })
+}
+
+export { normalizePath }
