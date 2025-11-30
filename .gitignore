@@ -39,7 +39,6 @@ next-env.d.ts
 package.json.gatsby-backup
 
 # old gatsby files (kept for reference)
-/src/pages
 /src/templates
 gatsby-*.js
 .cache/
