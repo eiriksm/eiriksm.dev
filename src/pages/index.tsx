@@ -1,6 +1,6 @@
 import { GetStaticProps } from "next"
 import Head from "next/head"
-import { drupal } from "@/lib/drupal"
+import { drupal, getAllResources } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
@@ -51,11 +51,9 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
 
-    const fetchedNodes = await drupal.getResourceCollection<DrupalNode>(
+    const fetchedNodes = await getAllResources<DrupalNode>(
       "node--article",
-      {
-        params: apiParams.getQueryObject(),
-      }
+      apiParams
     )
 
     const allNodes = (fetchedNodes as unknown as any[])

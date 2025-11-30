@@ -1,6 +1,6 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
-import { drupal } from "@/lib/drupal"
+import { drupal, getAllResources } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
@@ -47,12 +47,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     apiParams.addSort("created", "DESC")
 
     const nodes = (
-      await drupal.getResourceCollection<DrupalNode>(
-        "node--article",
-        {
-          params: apiParams.getQueryObject(),
-        }
-      )
+      await getAllResources<DrupalNode>("node--article", apiParams)
     )
       .slice()
       .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
@@ -97,12 +92,7 @@ export const getStaticProps: GetStaticProps<BlogPageProps> = async ({ params }) 
     apiParams.addSort("created", "DESC")
 
     const allNodes = (
-      await drupal.getResourceCollection<DrupalNode>(
-        "node--article",
-        {
-          params: apiParams.getQueryObject(),
-        }
-      )
+      await getAllResources<DrupalNode>("node--article", apiParams)
     )
       .slice()
       .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())

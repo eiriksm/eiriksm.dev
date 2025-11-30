@@ -1,6 +1,6 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
-import { drupal } from "@/lib/drupal"
+import { drupal, getAllResources } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
@@ -96,11 +96,9 @@ export const getStaticProps: GetStaticProps<TagPageProps> = async ({ params }) =
     apiParams.addSort("created", "DESC")
     apiParams.addInclude(["field_tags"])
 
-    const allNodes = await drupal.getResourceCollection<DrupalNode>(
+    const allNodes = await getAllResources<DrupalNode>(
       "node--article",
-      {
-        params: apiParams.getQueryObject(),
-      }
+      apiParams
     )
 
     // Filter nodes that have this tag

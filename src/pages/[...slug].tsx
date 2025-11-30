@@ -1,7 +1,13 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
 import Link from "next/link"
-import { drupal } from "@/lib/drupal"
+import {
+  addNodesToPathUuidMap,
+  drupal,
+  ensurePathUuidMap,
+  getAllResources,
+  normalizePath,
+} from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import { formatDate, absoluteUrl } from "@/lib/utils"
 import Comments from "@/components/Comments"
@@ -101,11 +107,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
     apiParams.addSort("created", "DESC")
     apiParams.addInclude(["field_tags", "field_image"])
 
-    const nodes = await drupal.getResourceCollection<DrupalNode>(
+    const nodes = await getAllResources<DrupalNode>(
       "node--article",
-      {
-        params: apiParams.getQueryObject(),
-      }
+      apiParams
     )
 
     console.log(`[getStaticPaths] Found ${nodes.length} blog posts`)
@@ -120,6 +124,8 @@ export const getStaticPaths: GetStaticPaths = async () => {
     })
 
     console.log(`[getStaticPaths] Total paths generated: ${paths.length}`)
+
+    addNodesToPathUuidMap(nodes)
 
     return {
       paths,
@@ -137,22 +143,89 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params }) => {
   const slug = params?.slug as string[]
-  const path = `/${slug.join("/")}`
+  const basePath = `/${slug.join("/")}`
+  const candidatePaths = Array.from(
+    new Set([
+      basePath,
+      basePath.endsWith("/") ? basePath.slice(0, -1) : `${basePath}/`,
+    ])
+  )
 
   try {
-    console.log(`[getStaticProps] Fetching blog post for path: ${path}`)
+    let node: DrupalNode | null = null
+    let lastError: unknown
 
-    const node = await drupal.getResourceByPath<DrupalNode>(
-      path,
-      {
-        params: {
-          "include": "field_tags,field_image",
-        },
+    for (const path of candidatePaths) {
+      console.log(`[getStaticProps] Fetching blog post for path: ${path}`)
+
+      try {
+        node = await drupal.getResourceByPath<DrupalNode>(path, {
+          params: {
+            "include": "field_tags,field_image",
+          },
+        })
+
+        if (node) {
+          console.log(`[getStaticProps] Found node for path: ${path}`)
+          break
+        }
+
+        console.warn(`[getStaticProps] No node found for path: ${path}`)
+      } catch (error) {
+        lastError = error
+
+        const status = (error as any)?.response?.status
+        if (status === 404) {
+          console.warn(`[getStaticProps] 404 for path: ${path}`)
+          continue
+        }
+
+        console.error(
+          `[getStaticProps] Error fetching path ${path}:`,
+          error
+        )
       }
-    )
+    }
 
     if (!node) {
-      console.error(`[getStaticProps] No node found for path: ${path}`)
+      console.warn(
+        `[getStaticProps] No node found via direct path fetch. Trying map-based fallback...`
+      )
+
+      const pathMap = await ensurePathUuidMap()
+      const normalizedCandidates = candidatePaths.map(normalizePath)
+      const matchedUuid = normalizedCandidates
+        .map((candidate) => pathMap[candidate])
+        .find(Boolean)
+
+      if (matchedUuid) {
+        console.log(
+          `[getStaticProps] Found UUID ${matchedUuid} for candidate paths ${normalizedCandidates.join(", ")}`
+        )
+
+        node = await drupal.getResource<DrupalNode>(
+          "node--article",
+          matchedUuid,
+          {
+            params: {
+              include: "field_tags,field_image",
+            },
+          }
+        )
+      }
+
+      if (node) {
+        console.log(
+          `[getStaticProps] Loaded node via map fallback: ${node.title}`
+        )
+      }
+    }
+
+    if (!node) {
+      console.error(
+        `[getStaticProps] No node found for any candidate paths: ${candidatePaths.join(", ")}`,
+        lastError ? `Last error: ${String(lastError)}` : ""
+      )
       return {
         notFound: true,
       }
@@ -166,7 +239,10 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
       },
     }
   } catch (error) {
-    console.error(`[getStaticProps] Error fetching blog post for ${path}:`, error)
+    console.error(
+      `[getStaticProps] Error fetching blog post for ${basePath}:`,
+      error
+    )
     return {
       notFound: true,
     }
