@@ -164,6 +164,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
 export async function generateStaticParams() {
   try {
+    console.log('[generateStaticParams] Fetching blog posts from Drupal API...')
+
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
     apiParams.addInclude(["field_tags", "field_image"])
@@ -176,13 +178,24 @@ export async function generateStaticParams() {
       }
     )
 
-    return nodes.map((node) => {
+    console.log(`[generateStaticParams] Found ${nodes.length} blog posts`)
+
+    const params = nodes.map((node) => {
       const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
       const slug = path.split("/").filter(Boolean)
+      console.log(`[generateStaticParams] Generated path: /${slug.join("/")}`)
       return { slug }
     })
+
+    console.log(`[generateStaticParams] Total params generated: ${params.length}`)
+    return params
   } catch (error) {
-    console.warn('Failed to generate static params for blog posts:', error)
+    console.error('[generateStaticParams] ERROR: Failed to generate static params for blog posts:', error)
+    console.error('[generateStaticParams] Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
+
+    // IMPORTANT: Returning empty array means NO static pages will be generated!
+    // This will cause all blog posts to 404 in static export
+    console.warn('[generateStaticParams] WARNING: Returning empty array - no static pages will be generated!')
     return []
   }
 }
