@@ -180,6 +180,43 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
     }
 
     if (!node) {
+      console.warn(
+        `[getStaticProps] No node found via direct path fetch. Trying collection fallback...`
+      )
+
+      const params = new DrupalJsonApiParams()
+      params.addInclude(["field_tags", "field_image"])
+
+      const articles = await getAllResources<DrupalNode>(
+        "node--article",
+        params
+      )
+
+      const normalizePath = (value: string | undefined) => {
+        if (!value) return ""
+        const ensured = value.startsWith("/") ? value : `/${value}`
+        return ensured.endsWith("/") ? ensured.slice(0, -1) : ensured
+      }
+
+      const normalizedCandidates = candidatePaths.map(normalizePath)
+
+      node = articles.find((article) => {
+        const alias = normalizePath(article.path?.alias)
+        const nidPath = normalizePath(`/node/${article.drupal_internal__nid}`)
+        return (
+          normalizedCandidates.includes(alias) ||
+          normalizedCandidates.includes(nidPath)
+        )
+      }) as DrupalNode | undefined
+
+      if (node) {
+        console.log(
+          `[getStaticProps] Found node via fallback collection search: ${node.title}`
+        )
+      }
+    }
+
+    if (!node) {
       console.error(
         `[getStaticProps] No node found for any candidate paths: ${candidatePaths.join(", ")}`,
         lastError ? `Last error: ${String(lastError)}` : ""
