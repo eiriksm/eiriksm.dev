@@ -103,13 +103,15 @@ async function loadPathUuidMapFromDisk(): Promise<PathUuidMap> {
 
   try {
     const data = await fs.readFile(PATH_UUID_MAP_FILE, "utf8")
-    cachedPathUuidMap = JSON.parse(data)
-    return cachedPathUuidMap
+    const map = (JSON.parse(data) as PathUuidMap) || {}
+    cachedPathUuidMap = map
+    return map
   } catch (error: any) {
     if (error?.code !== "ENOENT") {
       console.warn("[drupal] Failed to read path UUID map:", error)
     }
-    return {}
+    cachedPathUuidMap = {}
+    return cachedPathUuidMap
   }
 }
 
