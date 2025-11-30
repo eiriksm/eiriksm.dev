@@ -200,7 +200,7 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
 
       const normalizedCandidates = candidatePaths.map(normalizePath)
 
-      node = articles.find((article) => {
+      const found = articles.find((article) => {
         const alias = normalizePath(article.path?.alias)
         const nidPath = normalizePath(`/node/${article.drupal_internal__nid}`)
         return (
@@ -208,6 +208,10 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
           normalizedCandidates.includes(nidPath)
         )
       }) as DrupalNode | undefined
+
+      if (found) {
+        node = found
+      }
 
       if (node) {
         console.log(
