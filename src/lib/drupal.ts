@@ -42,7 +42,7 @@ export async function getAllResources<TResource>(
       "page[offset]": offset,
     }
 
-    const resources = await drupal.getResourceCollection<TResource>(
+    const resources = await drupal.getResourceCollection<TResource[]>(
       resourceType,
       {
         params,
