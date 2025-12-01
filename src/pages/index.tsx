@@ -5,6 +5,7 @@ import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+import { generatePlanetFeed } from "@/lib/planet-feed"
 
 const POSTS_PER_PAGE = 10
 
@@ -23,9 +24,7 @@ export default function HomePage({ nodes, totalPages }: HomePageProps) {
         <meta property="og:description" content="eiriksm.dev: Drupal blog for eiriksm." />
       </Head>
 
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">Latest Posts</h1>
-
+      <div className="max-w-4xl mx-auto px-4">
         <div className="space-y-8">
           {nodes.map((node) => (
             <BlogPostCard key={node.id} node={node} />
@@ -50,6 +49,7 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
 
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
+    apiParams.addInclude(["field_tags"])
 
     const fetchedNodes = await getAllResources<DrupalNode>(
       "node--article",
@@ -61,6 +61,7 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
       .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
 
     const totalPosts = allNodes.length
+    await generatePlanetFeed(allNodes)
     const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
 
     // Show only first page of posts

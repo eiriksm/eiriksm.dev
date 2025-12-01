@@ -19,6 +19,12 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@orkj" />
         <meta name="twitter:creator" content="@orkj" />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="eiriksm.dev Planet Drupal feed"
+          href="/planet"
+        />
       </Head>
       <Analytics />
       <div className="flex flex-col min-h-screen">

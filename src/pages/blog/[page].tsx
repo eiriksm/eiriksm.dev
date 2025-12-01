@@ -22,11 +22,7 @@ export default function BlogPage({ nodes, currentPage, totalPages }: BlogPagePro
         <meta name="description" content={`Blog posts page ${currentPage}`} />
       </Head>
 
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">
-          Latest Posts - Page {currentPage}
-        </h1>
-
+      <div className="max-w-4xl mx-auto px-4">
         <div className="space-y-8">
           {nodes.map((node) => (
             <BlogPostCard key={node.id} node={node} />
@@ -90,6 +86,7 @@ export const getStaticProps: GetStaticProps<BlogPageProps> = async ({ params }) 
 
     const apiParams = new DrupalJsonApiParams()
     apiParams.addSort("created", "DESC")
+    apiParams.addInclude(["field_tags"])
 
     const allNodes = (
       await getAllResources<DrupalNode>("node--article", apiParams)

@@ -18,7 +18,7 @@ export default function TagPage({ term, nodes }: TagPageProps) {
         <meta name="description" content={`All posts tagged with ${term.name}`} />
       </Head>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4">
         <header className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900">
             Posts tagged &quot;{term.name}&quot;

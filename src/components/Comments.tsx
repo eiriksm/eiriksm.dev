@@ -17,14 +17,19 @@ interface Comment {
 
 interface CommentsProps {
   issueId: string
+  initialComments?: Comment[]
 }
 
-export default function Comments({ issueId }: CommentsProps) {
-  const [comments, setComments] = useState<Comment[]>([])
-  const [loading, setLoading] = useState(true)
+export default function Comments({ issueId, initialComments = [] }: CommentsProps) {
+  const [comments, setComments] = useState<Comment[]>(initialComments)
+  const [loading, setLoading] = useState(initialComments.length === 0)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (initialComments.length > 0) {
+      return
+    }
+
     const fetchComments = async () => {
       try {
         const repo = process.env.NEXT_PUBLIC_GITHUB_REPO

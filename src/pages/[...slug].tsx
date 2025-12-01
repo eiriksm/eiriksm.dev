@@ -15,9 +15,10 @@ import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 interface BlogPostPageProps {
   node: DrupalNode
+  comments?: any[]
 }
 
-export default function BlogPostPage({ node }: BlogPostPageProps) {
+export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps) {
   const tags = node.field_tags || []
   const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
   const url = absoluteUrl(path)
@@ -38,7 +39,7 @@ export default function BlogPostPage({ node }: BlogPostPageProps) {
         <meta name="twitter:description" content={excerpt} />
       </Head>
 
-      <article className="max-w-4xl mx-auto">
+      <article className="max-w-4xl mx-auto px-4">
         <header className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             {node.title}
@@ -70,7 +71,7 @@ export default function BlogPostPage({ node }: BlogPostPageProps) {
         />
 
         {node.field_issue_comment_id && (
-          <Comments issueId={node.field_issue_comment_id} />
+          <Comments issueId={node.field_issue_comment_id} initialComments={comments} />
         )}
 
         {/* JSON-LD structured data */}
@@ -231,11 +232,38 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
       }
     }
 
+    let comments: any[] = []
+    const normalizedPath = normalizePath(node.path?.alias || `/node/${node.drupal_internal__nid}`)
+    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO
+
+    if (normalizedPath === "/drupal-deployment-confidence" && node.field_issue_comment_id && repo) {
+      try {
+        const response = await fetch(
+          `https://api.github.com/repos/${repo}/issues/${node.field_issue_comment_id}/comments`,
+          {
+            headers: process.env.GITHUB_TOKEN
+              ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
+              : {},
+          }
+        )
+
+        if (response.ok) {
+          comments = await response.json()
+          console.log(`[getStaticProps] Prefetched ${comments.length} GitHub comments for ${normalizedPath}`)
+        } else {
+          console.warn(`[getStaticProps] Failed to prefetch comments for ${normalizedPath}: ${response.status}`)
+        }
+      } catch (error) {
+        console.warn(`[getStaticProps] Error prefetching comments for ${normalizedPath}:`, error)
+      }
+    }
+
     console.log(`[getStaticProps] Successfully fetched: ${node.title}`)
 
     return {
       props: {
         node,
+        comments,
       },
     }
   } catch (error) {

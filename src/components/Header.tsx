@@ -3,7 +3,7 @@ import Link from "next/link"
 export default function Header() {
   return (
     <header className="bg-gray-800 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <Link href="/" className="text-2xl font-bold hover:text-gray-300 transition-colors">
             eiriksm.dev
