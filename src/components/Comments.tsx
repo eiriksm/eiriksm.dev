@@ -24,6 +24,23 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
   const [comments, setComments] = useState<Comment[]>(initialComments)
   const [loading, setLoading] = useState(initialComments.length === 0)
   const [error, setError] = useState<string | null>(null)
+  const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
+  const issueUrl = `https://github.com/${repo}/issues/${issueId}`
+
+  const commentCount = comments.length
+  const commentCountDisplay = `${commentCount}`.padStart(2, "0")
+  const commentWord =
+    commentCount === 1 ? "comment" : `comments${commentCount === 0 ? " 😿" : ""}`
+
+  const commentHeader = (
+    <div className="comment-header border-b-2 py-2 uppercase font-bold">
+      <span className="count bg-blue-800 text-white rounded text-lg p-1 font-mono">
+        {commentCountDisplay}
+      </span>
+      <span> </span>
+      {commentWord}
+    </div>
+  )
 
   useEffect(() => {
     if (initialComments.length > 0) {
@@ -65,25 +82,43 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
     fetchComments()
   }, [issueId])
 
+  const commentLink = (
+    <div className="comment-link-wrapper mt-6">
+      <p>Do you want to comment?</p>
+      <p className="text-sm">
+        This article uses github for commenting. To comment, you can visit{" "}
+        <a
+          href={issueUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {issueUrl}
+        </a>
+        .
+      </p>
+    </div>
+  )
+
   if (loading) {
     return (
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <h2 className="text-2xl font-bold mb-6">Comments</h2>
-        <div className="text-gray-500">Loading comments...</div>
+      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+        {commentHeader}
+        <div className="text-gray-500 mt-4">Loading comments...</div>
+        {commentLink}
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <h2 className="text-2xl font-bold mb-6">Comments</h2>
+      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+        {commentHeader}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <p className="text-gray-700 mb-4">
             Comments for this post are hosted on GitHub Issues.
           </p>
           <a
-            href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO}/issues/${issueId}`}
+            href={issueUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -91,15 +126,14 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
             View Comments on GitHub →
           </a>
         </div>
+        {commentLink}
       </div>
     )
   }
 
   return (
-    <div className="mt-12 pt-8 border-t border-gray-200">
-      <h2 className="text-2xl font-bold mb-6">
-        Comments ({comments.length})
-      </h2>
+    <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+      {commentHeader}
 
       {comments.length === 0 ? (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -107,7 +141,7 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
             No comments yet. Be the first to comment on GitHub!
           </p>
           <a
-            href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO}/issues/${issueId}`}
+            href={issueUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -150,7 +184,7 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
 
           <div className="mt-6">
             <a
-              href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO}/issues/${issueId}`}
+              href={issueUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -160,6 +194,7 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
           </div>
         </div>
       )}
+      {commentLink}
     </div>
   )
 }
