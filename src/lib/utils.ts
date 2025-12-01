@@ -22,8 +22,13 @@ export function getNodePath(node: DrupalNode): string {
 }
 
 export function extractExcerpt(body: string, maxLength: number = 200): string {
+  const normalizedBody = body
+    // Replace HTML non-breaking spaces with regular spaces
+    .replace(/&nbsp;/gi, " ")
+    // Replace unicode non-breaking space characters
+    .replace(/\u00a0/g, " ")
   // Strip HTML tags
-  const text = body.replace(/<[^>]*>/g, "")
+  const text = normalizedBody.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
   // Truncate to maxLength
   if (text.length <= maxLength) return text
   return text.substring(0, maxLength).trim() + "..."
