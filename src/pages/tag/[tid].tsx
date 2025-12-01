@@ -52,10 +52,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   try {
     console.log('[getStaticPaths] Fetching all tags...')
 
-    const terms = await drupal.getResourceCollection(
-      "taxonomy_term--tags",
-      {}
-    )
+    const terms = await getAllResources<any>("taxonomy_term--tags")
 
     await ensureTagUuidMap(terms)
 
