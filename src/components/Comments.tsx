@@ -27,6 +27,21 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
   const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
   const issueUrl = `https://github.com/${repo}/issues/${issueId}`
 
+  const commentCount = comments.length
+  const commentCountDisplay = `${commentCount}`.padStart(2, "0")
+  const commentWord =
+    commentCount === 1 ? "comment" : `comments${commentCount === 0 ? " 😿" : ""}`
+
+  const commentHeader = (
+    <div className="comment-header border-b-2 py-2 uppercase font-bold">
+      <span className="count bg-blue-800 text-white rounded text-lg p-1 font-mono">
+        {commentCountDisplay}
+      </span>
+      <span> </span>
+      {commentWord}
+    </div>
+  )
+
   useEffect(() => {
     if (initialComments.length > 0) {
       return
@@ -86,9 +101,9 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
 
   if (loading) {
     return (
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <h2 className="text-2xl font-bold mb-6">Comments</h2>
-        <div className="text-gray-500">Loading comments...</div>
+      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+        {commentHeader}
+        <div className="text-gray-500 mt-4">Loading comments...</div>
         {commentLink}
       </div>
     )
@@ -96,8 +111,8 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
 
   if (error) {
     return (
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <h2 className="text-2xl font-bold mb-6">Comments</h2>
+      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+        {commentHeader}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <p className="text-gray-700 mb-4">
             Comments for this post are hosted on GitHub Issues.
@@ -117,10 +132,8 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
   }
 
   return (
-    <div className="mt-12 pt-8 border-t border-gray-200">
-      <h2 className="text-2xl font-bold mb-6">
-        Comments ({comments.length})
-      </h2>
+    <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+      {commentHeader}
 
       {comments.length === 0 ? (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
