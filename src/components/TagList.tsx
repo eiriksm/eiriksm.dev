@@ -12,7 +12,7 @@ export default function TagList({ tags, className = "" }: TagListProps) {
 
   return (
     <div className={`field-type-taxonomy-term-reference ${className}`.trim()}>
-      <ul className="links field-items flex flex-wrap gap-2 list-none p-0 m-0">
+      <ul className="links field-items term-list flex flex-wrap gap-2 list-none p-0 m-0">
         {tags.map((tag: any) => (
           <li key={tag.id}>
             <Link

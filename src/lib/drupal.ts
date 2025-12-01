@@ -5,9 +5,12 @@ import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 const DEFAULT_PAGE_SIZE = 50
 const PATH_UUID_MAP_FILE = path.join(process.cwd(), ".cache", "path-uuid-map.json")
+const TAG_UUID_MAP_FILE = path.join(process.cwd(), ".cache", "tag-uuid-map.json")
 
 type PathUuidMap = Record<string, string>
+type TagUuidMap = Record<string, string>
 let cachedPathUuidMap: PathUuidMap | null = null
+let cachedTagUuidMap: TagUuidMap | null = null
 
 const drupalConfig: any = {}
 
@@ -148,3 +151,55 @@ export function addNodesToPathUuidMap(nodes: DrupalNode[]) {
 }
 
 export { normalizePath }
+
+function buildTagUuidMap(tags: any[]): TagUuidMap {
+  const map: TagUuidMap = {}
+
+  tags.forEach((tag) => {
+    const tid = (tag?.drupal_internal__tid || tag?.tid)?.toString()
+
+    if (tid && tag?.id) {
+      map[tid] = tag.id
+    }
+  })
+
+  return map
+}
+
+async function loadTagUuidMapFromDisk(): Promise<TagUuidMap> {
+  if (cachedTagUuidMap) {
+    return cachedTagUuidMap
+  }
+
+  try {
+    const data = await fs.readFile(TAG_UUID_MAP_FILE, "utf8")
+    const map = (JSON.parse(data) as TagUuidMap) || {}
+    cachedTagUuidMap = map
+    return map
+  } catch (error: any) {
+    if (error?.code !== "ENOENT") {
+      console.warn("[drupal] Failed to read tag UUID map:", error)
+    }
+    cachedTagUuidMap = {}
+    return cachedTagUuidMap
+  }
+}
+
+async function persistTagUuidMap(map: TagUuidMap) {
+  await fs.mkdir(path.dirname(TAG_UUID_MAP_FILE), { recursive: true })
+  await fs.writeFile(TAG_UUID_MAP_FILE, JSON.stringify(map, null, 2), "utf8")
+  cachedTagUuidMap = map
+}
+
+export async function ensureTagUuidMap(tags?: any[]): Promise<TagUuidMap> {
+  const existing = await loadTagUuidMapFromDisk()
+  if (Object.keys(existing).length) {
+    return existing
+  }
+
+  const sourceTags = tags || (await getAllResources<any>("taxonomy_term--tags"))
+  const map = buildTagUuidMap(sourceTags)
+  await persistTagUuidMap(map)
+
+  return map
+}
