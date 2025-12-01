@@ -114,8 +114,13 @@ pre[class*="language-"] {
 }
 
 /* Custom styles for blog content */
-.blog-content {
+.blog-content,
+.article-body {
   @apply prose prose-lg max-w-none;
+}
+
+.article-body p {
+  @apply mb-4;
 }
 
 .blog-content img {
