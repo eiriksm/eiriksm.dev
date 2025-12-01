@@ -39,9 +39,12 @@ export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps)
         <meta name="twitter:description" content={excerpt} />
       </Head>
 
-      <article className="max-w-4xl mx-auto px-4">
+      <article className="full max-w-4xl mx-auto px-4">
         <header className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h1
+            id="page-title"
+            className="text-4xl md:text-5xl font-bold text-gray-900 mb-4"
+          >
             {node.title}
           </h1>
           <div className="flex items-center text-gray-600 text-sm space-x-4">
@@ -54,7 +57,7 @@ export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps)
         </header>
 
         <div
-          className="blog-content prose prose-lg max-w-none"
+          className="article-body blog-content prose prose-lg max-w-none"
           dangerouslySetInnerHTML={{ __html: node.body?.value || "" }}
         />
 
