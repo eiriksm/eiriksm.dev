@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { DrupalNode } from "next-drupal"
 import { formatDate, getNodePath, extractExcerpt } from "@/lib/utils"
+import TagList from "./TagList"
 
 interface BlogPostCardProps {
   node: DrupalNode
@@ -32,19 +33,7 @@ export default function BlogPostCard({ node }: BlogPostCardProps) {
           </p>
         )}
 
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4 px-4">
-            {tags.map((tag: any) => (
-              <Link
-                key={tag.id}
-                href={`/tag/${tag.drupal_internal__tid}/`}
-                className="tag"
-              >
-                {tag.name}
-              </Link>
-            ))}
-          </div>
-        )}
+        <TagList tags={tags} className="mb-4 px-4" />
 
         <Link
           href={path}
