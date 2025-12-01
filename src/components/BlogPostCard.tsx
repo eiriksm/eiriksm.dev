@@ -12,7 +12,7 @@ export default function BlogPostCard({ node }: BlogPostCardProps) {
   const tags = node.field_tags || []
 
   return (
-    <article className="bg-white rounded-lg overflow-hidden">
+    <article className="node node--view-mode-teaser bg-white rounded-lg overflow-hidden">
       <div className="py-6">
         <h2 className="node__title text-2xl font-bold mb-3 px-4">
           <Link href={path} className="text-gray-900 hover:text-blue-600 transition-colors">
