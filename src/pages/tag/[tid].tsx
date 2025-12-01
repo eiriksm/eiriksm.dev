@@ -1,6 +1,10 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
-import { drupal, getAllResources } from "@/lib/drupal"
+import {
+  drupal,
+  ensureTagUuidMap,
+  getAllResources,
+} from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
@@ -53,6 +57,8 @@ export const getStaticPaths: GetStaticPaths = async () => {
       {}
     )
 
+    await ensureTagUuidMap(terms)
+
     const paths = terms.map((term: any) => ({
       params: {
         tid: term.drupal_internal__tid?.toString() || term.id,
@@ -80,9 +86,12 @@ export const getStaticProps: GetStaticProps<TagPageProps> = async ({ params }) =
   try {
     console.log(`[getStaticProps] Fetching tag ${tid}...`)
 
+    const tagUuidMap = await ensureTagUuidMap()
+    const tagId = tagUuidMap[tid] || tid
+
     const term = await drupal.getResource(
       "taxonomy_term--tags",
-      tid
+      tagId
     )
 
     if (!term) {
