@@ -1,6 +1,5 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
-import Link from "next/link"
 import {
   addNodesToPathUuidMap,
   drupal,
@@ -12,6 +11,7 @@ import { DrupalNode } from "next-drupal"
 import { formatDate, absoluteUrl } from "@/lib/utils"
 import Comments from "@/components/Comments"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+import TagList from "@/components/TagList"
 
 interface BlogPostPageProps {
   node: DrupalNode
@@ -50,19 +50,7 @@ export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps)
             </time>
           </div>
 
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {tags.map((tag: any) => (
-                <Link
-                  key={tag.id}
-                  href={`/tag/${tag.drupal_internal__tid}/`}
-                  className="tag"
-                >
-                  {tag.name}
-                </Link>
-              ))}
-            </div>
-          )}
+          <TagList tags={tags} className="mt-4" />
         </header>
 
         <div
