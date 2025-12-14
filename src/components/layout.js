@@ -7,7 +7,7 @@
 
 import React from "react"
 import PropTypes from "prop-types"
-import { useStaticQuery, graphql } from "gatsby"
+import { useStaticQuery, graphql, Link } from "gatsby"
 
 import Header from "./header"
 import "./layout.css"
@@ -50,7 +50,7 @@ const Layout = ({ children }) => {
               </svg>
             </a>
           </div>
-          <div className="eirik">© {new Date().getFullYear()}, eiriksm</div>
+          <div className="eirik">© {new Date().getFullYear()}, eiriksm | <Link to="/privacy/">Privacy Policy</Link></div>
         </footer>
       </div>
     </>
