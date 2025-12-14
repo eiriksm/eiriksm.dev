@@ -12,6 +12,7 @@ const POSTS_PER_PAGE = 10
 interface HomePageProps {
   nodes: DrupalNode[]
   totalPages: number
+  isBlogListing: boolean
 }
 
 export default function HomePage({ nodes, totalPages }: HomePageProps) {
@@ -24,8 +25,8 @@ export default function HomePage({ nodes, totalPages }: HomePageProps) {
         <meta property="og:description" content="eiriksm.dev: Drupal blog for eiriksm." />
       </Head>
 
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="space-y-8">
+      <div className="max-w-4xl mx-auto">
+        <div>
           {nodes.map((node) => (
             <BlogPostCard key={node.id} node={node} />
           ))}
@@ -33,7 +34,7 @@ export default function HomePage({ nodes, totalPages }: HomePageProps) {
 
         {nodes.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No posts found.</p>
+            <p style={{ color: 'var(--text-muted)' }} className="text-lg">No posts found.</p>
           </div>
         )}
 
@@ -73,6 +74,7 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
       props: {
         nodes,
         totalPages,
+        isBlogListing: true,
       },
     }
   } catch (error) {
@@ -81,6 +83,7 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
       props: {
         nodes: [],
         totalPages: 0,
+        isBlogListing: true,
       },
     }
   }

@@ -12,6 +12,7 @@ interface BlogPageProps {
   nodes: DrupalNode[]
   currentPage: number
   totalPages: number
+  isBlogListing: boolean
 }
 
 export default function BlogPage({ nodes, currentPage, totalPages }: BlogPageProps) {
@@ -22,8 +23,8 @@ export default function BlogPage({ nodes, currentPage, totalPages }: BlogPagePro
         <meta name="description" content={`Blog posts page ${currentPage}`} />
       </Head>
 
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="space-y-8">
+      <div className="max-w-4xl mx-auto">
+        <div>
           {nodes.map((node) => (
             <BlogPostCard key={node.id} node={node} />
           ))}
@@ -114,6 +115,7 @@ export const getStaticProps: GetStaticProps<BlogPageProps> = async ({ params }) 
         nodes,
         currentPage,
         totalPages,
+        isBlogListing: true,
       },
     }
   } catch (error) {
