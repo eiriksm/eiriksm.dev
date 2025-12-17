@@ -508,3 +508,41 @@ html.dark .article-body {
 .talks-table td:first-child {
   color: var(--text-primary);
 }
+
+/* Comment body markdown styles */
+.comment-body a {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.comment-body a:hover {
+  opacity: 0.8;
+}
+
+.comment-body code {
+  background-color: var(--bg-secondary);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.comment-body pre {
+  background-color: #272822;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.comment-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.comment-body p {
+  margin-bottom: 0.75rem;
+}
+
+.comment-body p:last-child {
+  margin-bottom: 0;
+}

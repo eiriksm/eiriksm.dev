@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { formatDate } from "@/lib/utils"
 import type { DisqusComment } from "@/lib/disqus"
+import { marked } from "marked"
 
 interface GitHubComment {
   id: number
@@ -30,6 +31,20 @@ interface CommentsProps {
   issueId?: string
   initialComments?: GitHubComment[]
   disqusComments?: DisqusComment[]
+}
+
+// Configure marked for safe rendering
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+})
+
+function parseMarkdown(text: string): string {
+  try {
+    return marked.parse(text, { async: false }) as string
+  } catch {
+    return text
+  }
 }
 
 function normalizeGitHubComment(comment: GitHubComment): UnifiedComment {
@@ -71,10 +86,10 @@ export default function Comments({ issueId, initialComments = [], disqusComments
   const issueUrl = issueId ? `https://github.com/${repo}/issues/${issueId}` : null
 
   // Merge and sort all comments by date
-  const allComments: UnifiedComment[] = [
+  const allComments: UnifiedComment[] = useMemo(() => [
     ...disqusComments.map(normalizeDisqusComment),
     ...githubComments.map(normalizeGitHubComment),
-  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()), [disqusComments, githubComments])
 
   const commentCount = allComments.length
   const commentCountDisplay = `${commentCount}`.padStart(2, "0")
@@ -82,8 +97,8 @@ export default function Comments({ issueId, initialComments = [], disqusComments
     commentCount === 1 ? "comment" : `comments${commentCount === 0 ? " 😿" : ""}`
 
   const commentHeader = (
-    <div className="comment-header border-b-2 py-2 uppercase font-bold">
-      <span className="count bg-blue-800 text-white rounded text-lg p-1 font-mono">
+    <div className="comment-header border-b-2 py-2 uppercase font-bold" style={{ borderColor: 'var(--border-color)' }}>
+      <span className="count rounded text-lg p-1 font-mono" style={{ backgroundColor: 'var(--accent-color)', color: 'white' }}>
         {commentCountDisplay}
       </span>
       <span> </span>
@@ -125,7 +140,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
   }, [issueId, initialComments.length, repo])
 
   const commentLink = issueUrl ? (
-    <div className="comment-link-wrapper mt-6">
+    <div className="comment-link-wrapper mt-6" style={{ color: 'var(--text-secondary)' }}>
       <p>Do you want to comment?</p>
       <p className="text-sm">
         This article uses github for commenting. To comment, you can visit{" "}
@@ -133,6 +148,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
           href={issueUrl}
           target="_blank"
           rel="noopener noreferrer"
+          style={{ color: 'var(--accent-color)' }}
         >
           {issueUrl}
         </a>
@@ -143,9 +159,9 @@ export default function Comments({ issueId, initialComments = [], disqusComments
 
   if (loading) {
     return (
-      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8" style={{ borderColor: 'var(--border-color)' }}>
         {commentHeader}
-        <div className="text-gray-500 mt-4">Loading comments...</div>
+        <div className="mt-4" style={{ color: 'var(--text-muted)' }}>Loading comments...</div>
         {commentLink}
       </div>
     )
@@ -153,10 +169,10 @@ export default function Comments({ issueId, initialComments = [], disqusComments
 
   if (error && disqusComments.length === 0) {
     return (
-      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+      <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8" style={{ borderColor: 'var(--border-color)' }}>
         {commentHeader}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <p className="text-gray-700 mb-4">
+        <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
             Comments for this post are hosted on GitHub Issues.
           </p>
           {issueUrl && (
@@ -164,7 +180,8 @@ export default function Comments({ issueId, initialComments = [], disqusComments
               href={issueUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-block px-6 py-2 rounded-lg transition-colors"
+              style={{ backgroundColor: 'var(--accent-color)', color: 'white' }}
             >
               View Comments on GitHub →
             </a>
@@ -176,12 +193,12 @@ export default function Comments({ issueId, initialComments = [], disqusComments
   }
 
   return (
-    <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8 border-gray-200">
+    <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8" style={{ borderColor: 'var(--border-color)' }}>
       {commentHeader}
 
       {allComments.length === 0 ? (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <p className="text-gray-700 mb-4">
+        <div className="rounded-lg p-6 mt-4" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
             No comments yet. Be the first to comment on GitHub!
           </p>
           {issueUrl && (
@@ -189,14 +206,15 @@ export default function Comments({ issueId, initialComments = [], disqusComments
               href={issueUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-block px-6 py-2 rounded-lg transition-colors"
+              style={{ backgroundColor: 'var(--accent-color)', color: 'white' }}
             >
               Add Comment on GitHub →
             </a>
           )}
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 mt-4">
           {allComments.map((comment) => (
             <div key={comment.id} className="comment">
               <div className="flex items-start space-x-4">
@@ -206,31 +224,33 @@ export default function Comments({ issueId, initialComments = [], disqusComments
                   className="w-10 h-10 rounded-full"
                 />
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     {comment.authorUrl ? (
                       <a
                         href={comment.authorUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="comment-author hover:text-blue-600"
+                        className="comment-author"
+                        style={{ color: 'var(--text-primary)' }}
                       >
                         {comment.author}
                       </a>
                     ) : (
-                      <span className="comment-author">{comment.author}</span>
+                      <span className="comment-author" style={{ color: 'var(--text-primary)' }}>{comment.author}</span>
                     )}
-                    <span className="comment-date">
+                    <span className="comment-date" style={{ color: 'var(--text-muted)' }}>
                       {formatDate(comment.createdAt)}
                     </span>
                     {comment.source === "disqus" && (
-                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
                         via Disqus
                       </span>
                     )}
                   </div>
                   <div
-                    className="comment-body prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: comment.body }}
+                    className="comment-body prose prose-sm max-w-none"
+                    style={{ color: 'var(--text-secondary)' }}
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(comment.body) }}
                   />
                 </div>
               </div>
@@ -243,7 +263,8 @@ export default function Comments({ issueId, initialComments = [], disqusComments
                 href={issueUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-block px-6 py-2 rounded-lg transition-colors"
+                style={{ backgroundColor: 'var(--accent-color)', color: 'white' }}
               >
                 Add Comment on GitHub →
               </a>
