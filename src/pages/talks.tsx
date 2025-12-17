@@ -59,58 +59,53 @@ export default function TalksPage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="talks-table w-full">
-            <thead>
-              <tr>
-                <th className="text-left py-3 px-4">Title</th>
-                <th className="text-left py-3 px-4">Event</th>
-                <th className="text-left py-3 px-4">Date</th>
-                <th className="text-center py-3 px-4">Video</th>
-                <th className="text-center py-3 px-4">Slides</th>
-              </tr>
-            </thead>
-            <tbody>
-              {talks.map((talk, index) => (
-                <tr key={index}>
-                  <td className="py-3 px-4 font-medium">{talk.title}</td>
-                  <td className="py-3 px-4">{talk.event}</td>
-                  <td className="py-3 px-4">{formatDate(talk.date)}</td>
-                  <td className="py-3 px-4 text-center">
-                    {talk.videoUrl ? (
-                      <a
-                        href={talk.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center text-red-600 hover:text-red-700"
-                        title="Watch video"
-                      >
-                        <FaVideo className="w-5 h-5" />
-                      </a>
-                    ) : (
-                      <span className="text-gray-300">-</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    {talk.slidesUrl ? (
-                      <a
-                        href={talk.slidesUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center hover:opacity-80"
-                        style={{ color: 'var(--accent-color)' }}
-                        title="View slides"
-                      >
-                        <FaDesktop className="w-5 h-5" />
-                      </a>
-                    ) : (
-                      <span className="text-gray-300">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {talks.map((talk, index) => (
+            <div
+              key={index}
+              className="talk-card p-4 rounded-lg border"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-color)',
+              }}
+            >
+              <h3 className="font-semibold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>
+                {talk.title}
+              </h3>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                <span>{talk.event}</span>
+                <span>•</span>
+                <span>{formatDate(talk.date)}</span>
+              </div>
+              {(talk.videoUrl || talk.slidesUrl) && (
+                <div className="flex gap-4 mt-3">
+                  {talk.videoUrl && (
+                    <a
+                      href={talk.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700"
+                    >
+                      <FaVideo className="w-4 h-4" />
+                      <span>Watch video</span>
+                    </a>
+                  )}
+                  {talk.slidesUrl && (
+                    <a
+                      href={talk.slidesUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm hover:opacity-80"
+                      style={{ color: 'var(--accent-color)' }}
+                    >
+                      <FaDesktop className="w-4 h-4" />
+                      <span>View slides</span>
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="mt-12 p-6 rounded-lg" style={{ backgroundColor: 'var(--bg-secondary)' }}>
@@ -127,9 +122,9 @@ export default function TalksPage() {
                 Talking Drupal #443 - Violinist.io
                 <FaExternalLinkAlt className="w-3 h-3" />
               </a>
-              <span className="text-sm ml-2" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
                 Discussing automated Composer dependency updates
-              </span>
+              </p>
             </li>
           </ul>
         </div>
