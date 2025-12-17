@@ -50,12 +50,10 @@ export default function BlogPostCard({ node, commentCount = 0 }: BlogPostCardPro
 
       <div className="card-footer">
         <div className="card-stats">
-          {commentCount > 0 && (
-            <div className="comment-count">
-              <FaComment />
-              <span>{commentCount}</span>
-            </div>
-          )}
+          <div className="comment-count">
+            <FaComment />
+            <span>{commentCount}</span>
+          </div>
         </div>
         <Link href={path} className="read-article-link">
           Read article <HiArrowRight />
