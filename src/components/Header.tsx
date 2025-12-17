@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export default function Header({
   showBlogHeader = false,
-  blogTitle = "Developer Blog",
+  blogTitle = "eiriksm.dev",
   blogSubtitle = "Thoughts on building for the web"
 }: HeaderProps) {
   return (

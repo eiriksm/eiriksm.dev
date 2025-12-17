@@ -393,3 +393,82 @@ html.dark .article-body {
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
+
+/* Article full view styles */
+.article-full {
+  padding-bottom: 2rem;
+}
+
+.article-full-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.article-full-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .article-full-title {
+    font-size: 3rem;
+  }
+}
+
+.article-full-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.article-full-meta .author {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.article-full-meta .separator {
+  color: var(--text-muted);
+}
+
+.article-full-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.article-full-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.article-full-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.article-full-stats .stat-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Tags list shared styles */
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
