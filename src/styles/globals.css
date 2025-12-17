@@ -472,3 +472,39 @@ html.dark .article-body {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* Talks table styles */
+.talks-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.talks-table thead {
+  background-color: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.talks-table th {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.talks-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.15s ease;
+}
+
+.talks-table tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+.talks-table td {
+  color: var(--text-secondary);
+}
+
+.talks-table td:first-child {
+  color: var(--text-primary);
+}
