@@ -6,6 +6,8 @@ import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import { generatePlanetFeed } from "@/lib/planet-feed"
+import { getDisqusCommentCount } from "@/lib/disqus"
+import { getNodePath } from "@/lib/utils"
 
 const POSTS_PER_PAGE = 10
 
@@ -92,15 +94,24 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
     // Show only first page of posts
     const pageNodes = allNodes.slice(0, POSTS_PER_PAGE)
 
-    // Fetch comment counts for nodes with issue IDs
+    // Fetch comment counts - GitHub Issues first, disqus.xml as fallback
     const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
     const nodesWithComments: NodeWithComments[] = await Promise.all(
       pageNodes.map(async (node: any) => {
+        let commentCount = 0
+
+        // Try GitHub Issues first
         if (node.field_issue_comment_id) {
-          const commentCount = await fetchCommentCount(node.field_issue_comment_id, repo)
-          return { ...node, commentCount }
+          commentCount = await fetchCommentCount(node.field_issue_comment_id, repo)
         }
-        return { ...node, commentCount: 0 }
+
+        // Fall back to disqus.xml if no GitHub comments
+        if (commentCount === 0) {
+          const path = getNodePath(node)
+          commentCount = getDisqusCommentCount(path)
+        }
+
+        return { ...node, commentCount }
       })
     )
 
