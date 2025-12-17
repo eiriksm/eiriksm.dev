@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { formatDate } from "@/lib/utils"
 import type { DisqusComment } from "@/lib/disqus"
-import { marked } from "marked"
+import { parseCommentBody } from "@/lib/comment-parser"
 
 interface GitHubComment {
   id: number
@@ -31,20 +31,6 @@ interface CommentsProps {
   issueId?: string
   initialComments?: GitHubComment[]
   disqusComments?: DisqusComment[]
-}
-
-// Configure marked for safe rendering
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-})
-
-function parseMarkdown(text: string): string {
-  try {
-    return marked.parse(text, { async: false }) as string
-  } catch {
-    return text
-  }
 }
 
 function normalizeGitHubComment(comment: GitHubComment): UnifiedComment {
@@ -250,7 +236,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
                   <div
                     className="comment-body prose prose-sm max-w-none"
                     style={{ color: 'var(--text-secondary)' }}
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(comment.body) }}
+                    dangerouslySetInnerHTML={{ __html: parseCommentBody(comment.body) }}
                   />
                 </div>
               </div>
