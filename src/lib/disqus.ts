@@ -5,7 +5,6 @@ import { XMLParser } from "fast-xml-parser"
 export interface DisqusComment {
   id: string
   author: string
-  authorEmail?: string
   body: string
   createdAt: string
   isAnonymous: boolean
@@ -98,7 +97,6 @@ function parseDisqusData(): DisqusData {
               author: isAnonymous
                 ? (post.author?.name || "Anonymous")
                 : (post.author?.name || post.author?.username || "Unknown"),
-              authorEmail: post.author?.email,
               body: post.message || "",
               createdAt: post.createdAt || new Date().toISOString(),
               isAnonymous,
