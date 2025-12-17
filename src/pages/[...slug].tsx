@@ -13,10 +13,12 @@ import Comments from "@/components/Comments"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import Link from "next/link"
 import { FaComment } from "react-icons/fa"
+import { getDisqusCommentCount } from "@/lib/disqus"
 
 interface BlogPostPageProps {
   node: DrupalNode
   comments?: any[]
+  disqusCommentCount?: number
 }
 
 function estimateReadTime(html: string): number {
@@ -25,13 +27,14 @@ function estimateReadTime(html: string): number {
   return Math.max(1, Math.ceil(words / 200))
 }
 
-export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps) {
+export default function BlogPostPage({ node, comments = [], disqusCommentCount = 0 }: BlogPostPageProps) {
   const tags = node.field_tags || []
   const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
   const url = absoluteUrl(path)
   const excerpt = node.body?.summary || node.body?.value?.substring(0, 160)
   const readTime = estimateReadTime(node.body?.value || "")
-  const commentCount = comments.length
+  // Use GitHub comments count, fall back to disqus count
+  const commentCount = comments.length > 0 ? comments.length : disqusCommentCount
 
   return (
     <>
@@ -279,12 +282,19 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
       }
     }
 
+    // Get disqus comment count as fallback
+    const disqusCommentCount = getDisqusCommentCount(normalizedPath)
+    if (disqusCommentCount > 0) {
+      console.log(`[getStaticProps] Found ${disqusCommentCount} disqus comments for ${normalizedPath}`)
+    }
+
     console.log(`[getStaticProps] Successfully fetched: ${node.title}`)
 
     return {
       props: {
         node,
         comments,
+        disqusCommentCount,
       },
     }
   } catch (error) {
