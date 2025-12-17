@@ -11,18 +11,30 @@ import { DrupalNode } from "next-drupal"
 import { formatDate, absoluteUrl } from "@/lib/utils"
 import Comments from "@/components/Comments"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
-import TagList from "@/components/TagList"
+import Link from "next/link"
+import { FaComment } from "react-icons/fa"
+import { getDisqusComments, type DisqusComment } from "@/lib/disqus"
 
 interface BlogPostPageProps {
   node: DrupalNode
   comments?: any[]
+  disqusComments?: DisqusComment[]
 }
 
-export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps) {
+function estimateReadTime(html: string): number {
+  const text = html.replace(/<[^>]*>/g, '')
+  const words = text.split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.ceil(words / 200))
+}
+
+export default function BlogPostPage({ node, comments = [], disqusComments = [] }: BlogPostPageProps) {
   const tags = node.field_tags || []
   const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
   const url = absoluteUrl(path)
   const excerpt = node.body?.summary || node.body?.value?.substring(0, 160)
+  const readTime = estimateReadTime(node.body?.value || "")
+  // Total comment count from both sources
+  const commentCount = comments.length + disqusComments.length
 
   return (
     <>
@@ -39,21 +51,42 @@ export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps)
         <meta name="twitter:description" content={excerpt} />
       </Head>
 
-      <article className="full max-w-4xl mx-auto px-4">
-        <header className="mb-8">
-          <h1
-            id="page-title"
-            className="text-4xl md:text-5xl font-bold text-gray-900 mb-4"
-          >
+      <article className="article-full max-w-4xl mx-auto">
+        <header className="article-full-header">
+          <h1 className="article-full-title">
             {node.title}
           </h1>
-          <div className="flex items-center text-gray-600 text-sm space-x-4">
+
+          <div className="article-full-meta">
+            <span className="author">Eirik S. Morland</span>
+            <span className="separator">•</span>
             <time dateTime={new Date((node.created as unknown as number) * 1000).toISOString()}>
               {formatDate(node.created)}
             </time>
+            <span className="separator">•</span>
+            <span>{readTime} min read</span>
           </div>
 
-          <TagList tags={tags} className="mt-4" />
+          {tags.length > 0 && (
+            <div className="article-full-tags">
+              {tags.map((tag: any) => (
+                <Link
+                  key={tag.id}
+                  href={`/tag/${tag.drupal_internal__tid}/`}
+                  className="tag"
+                >
+                  {tag.name}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className="article-full-stats">
+            <div className="stat-item">
+              <FaComment />
+              <span>{commentCount} comments</span>
+            </div>
+          </div>
         </header>
 
         <div
@@ -61,8 +94,12 @@ export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps)
           dangerouslySetInnerHTML={{ __html: node.body?.value || "" }}
         />
 
-        {node.field_issue_comment_id && (
-          <Comments issueId={node.field_issue_comment_id} initialComments={comments} />
+        {(node.field_issue_comment_id || disqusComments.length > 0) && (
+          <Comments
+            issueId={node.field_issue_comment_id}
+            initialComments={comments}
+            disqusComments={disqusComments}
+          />
         )}
 
         {/* JSON-LD structured data */}
@@ -225,9 +262,9 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
 
     let comments: any[] = []
     const normalizedPath = normalizePath(node.path?.alias || `/node/${node.drupal_internal__nid}`)
-    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO
+    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
 
-    if (normalizedPath === "/drupal-deployment-confidence" && node.field_issue_comment_id && repo) {
+    if (node.field_issue_comment_id) {
       try {
         const response = await fetch(
           `https://api.github.com/repos/${repo}/issues/${node.field_issue_comment_id}/comments`,
@@ -249,12 +286,19 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
       }
     }
 
+    // Get disqus comments
+    const disqusComments = getDisqusComments(normalizedPath)
+    if (disqusComments.length > 0) {
+      console.log(`[getStaticProps] Found ${disqusComments.length} disqus comments for ${normalizedPath}`)
+    }
+
     console.log(`[getStaticProps] Successfully fetched: ${node.title}`)
 
     return {
       props: {
         node,
         comments,
+        disqusComments,
       },
     }
   } catch (error) {

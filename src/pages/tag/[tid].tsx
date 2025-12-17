@@ -22,17 +22,17 @@ export default function TagPage({ term, nodes }: TagPageProps) {
         <meta name="description" content={`All posts tagged with ${term.name}`} />
       </Head>
 
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Posts tagged &quot;{term.name}&quot;
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="mt-2" style={{ color: 'var(--text-muted)' }}>
             {nodes.length} {nodes.length === 1 ? "post" : "posts"} found
           </p>
         </header>
 
-        <div className="space-y-8">
+        <div>
           {nodes.map((node) => (
             <BlogPostCard key={node.id} node={node} />
           ))}
@@ -40,7 +40,7 @@ export default function TagPage({ term, nodes }: TagPageProps) {
 
         {nodes.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No posts found with this tag.</p>
+            <p className="text-lg" style={{ color: 'var(--text-muted)' }}>No posts found with this tag.</p>
           </div>
         )}
       </div>

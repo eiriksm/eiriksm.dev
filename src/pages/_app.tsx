@@ -1,5 +1,6 @@
 import type { AppProps } from "next/app"
 import Head from "next/head"
+import Script from "next/script"
 import "@/styles/globals.css"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
@@ -26,6 +27,24 @@ export default function App({ Component, pageProps }: AppProps) {
           href="/planet"
         />
       </Head>
+      {/* Inline script to prevent flash of wrong theme */}
+      <Script
+        id="theme-script"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                var savedTheme = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            })();
+          `,
+        }}
+      />
       <Analytics />
       <div className="flex flex-col min-h-screen">
         <Header />

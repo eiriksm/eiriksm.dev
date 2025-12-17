@@ -5,13 +5,40 @@ import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+import { getDisqusCommentCount } from "@/lib/disqus"
+import { getNodePath } from "@/lib/utils"
 
 const POSTS_PER_PAGE = 10
 
+interface NodeWithComments extends DrupalNode {
+  commentCount?: number
+}
+
 interface BlogPageProps {
-  nodes: DrupalNode[]
+  nodes: NodeWithComments[]
   currentPage: number
   totalPages: number
+  isBlogListing: boolean
+}
+
+async function fetchCommentCount(issueId: string, repo: string): Promise<number> {
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${repo}/issues/${issueId}`,
+      {
+        headers: process.env.GITHUB_TOKEN
+          ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
+          : {},
+      }
+    )
+    if (response.ok) {
+      const issue = await response.json()
+      return issue.comments || 0
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch comment count for issue ${issueId}:`, error)
+  }
+  return 0
 }
 
 export default function BlogPage({ nodes, currentPage, totalPages }: BlogPageProps) {
@@ -22,10 +49,10 @@ export default function BlogPage({ nodes, currentPage, totalPages }: BlogPagePro
         <meta name="description" content={`Blog posts page ${currentPage}`} />
       </Head>
 
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="space-y-8">
+      <div className="max-w-4xl mx-auto">
+        <div>
           {nodes.map((node) => (
-            <BlogPostCard key={node.id} node={node} />
+            <BlogPostCard key={node.id} node={node} commentCount={node.commentCount} />
           ))}
         </div>
 
@@ -105,15 +132,37 @@ export const getStaticProps: GetStaticProps<BlogPageProps> = async ({ params }) 
 
     // Calculate pagination
     const offset = (currentPage - 1) * POSTS_PER_PAGE
-    const nodes = allNodes.slice(offset, offset + POSTS_PER_PAGE)
+    const pageNodes = allNodes.slice(offset, offset + POSTS_PER_PAGE)
 
-    console.log(`[getStaticProps] Page ${currentPage}: ${nodes.length} posts (${totalPosts} total)`)
+    // Fetch comment counts - GitHub Issues first, disqus.xml as fallback
+    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
+    const nodesWithComments: NodeWithComments[] = await Promise.all(
+      pageNodes.map(async (node: any) => {
+        let commentCount = 0
+
+        // Try GitHub Issues first
+        if (node.field_issue_comment_id) {
+          commentCount = await fetchCommentCount(node.field_issue_comment_id, repo)
+        }
+
+        // Fall back to disqus.xml if no GitHub comments
+        if (commentCount === 0) {
+          const path = getNodePath(node)
+          commentCount = getDisqusCommentCount(path)
+        }
+
+        return { ...node, commentCount }
+      })
+    )
+
+    console.log(`[getStaticProps] Page ${currentPage}: ${nodesWithComments.length} posts (${totalPosts} total)`)
 
     return {
       props: {
-        nodes,
+        nodes: nodesWithComments,
         currentPage,
         totalPages,
+        isBlogListing: true,
       },
     }
   } catch (error) {

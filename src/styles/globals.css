@@ -1,6 +1,51 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* CSS Variables for theming */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-card: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --accent-color: #14b8a6;
+  --accent-hover: #0d9488;
+  --link-color: #2563eb;
+  --link-hover: #1d4ed8;
+  --tag-bg: #14b8a6;
+  --tag-text: #ffffff;
+  --header-bg: #f9fafb;
+  --footer-bg: #1f2937;
+}
+
+html.dark {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-card: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --border-color: #374151;
+  --accent-color: #14b8a6;
+  --accent-hover: #2dd4bf;
+  --link-color: #60a5fa;
+  --link-hover: #93c5fd;
+  --tag-bg: #14b8a6;
+  --tag-text: #ffffff;
+  --header-bg: #1f2937;
+  --footer-bg: #111827;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  line-height: 1.66;
+}
+
 /* Prism.js Monokai theme for code highlighting */
 pre[class*="language-"] {
   @apply rounded-lg overflow-x-auto my-6;
@@ -11,7 +56,7 @@ pre[class*="language-"] {
   color: #f8f8f2;
   background: none;
   text-shadow: 0 1px rgba(0, 0, 0, 0.3);
-  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 0.9em;
   text-align: left;
   white-space: pre;
@@ -119,6 +164,11 @@ pre[class*="language-"] {
   @apply prose prose-lg max-w-none;
 }
 
+html.dark .blog-content,
+html.dark .article-body {
+  @apply prose-invert;
+}
+
 .article-body p {
   @apply mb-4;
 }
@@ -128,7 +178,11 @@ pre[class*="language-"] {
 }
 
 .blog-content blockquote {
-  @apply border-l-4 border-blue-500 pl-4 italic my-4;
+  border-left: 4px solid var(--accent-color);
+  padding-left: 1rem;
+  font-style: italic;
+  margin: 1rem 0;
+  color: var(--text-secondary);
 }
 
 .blog-content ul,
@@ -144,6 +198,7 @@ pre[class*="language-"] {
 .blog-content h3,
 .blog-content h4 {
   @apply font-bold mt-8 mb-4;
+  color: var(--text-primary);
 }
 
 .blog-content h2 {
@@ -155,27 +210,339 @@ pre[class*="language-"] {
 }
 
 .blog-content a {
-  @apply text-blue-600 hover:text-blue-800 underline;
+  color: var(--link-color);
+}
+
+.blog-content a:hover {
+  color: var(--link-hover);
 }
 
 /* Comment styles */
 .comment {
-  @apply mb-6 p-4 bg-gray-50 rounded-lg;
+  @apply mb-6 p-4 rounded-lg;
+  background-color: var(--bg-secondary);
 }
 
 .comment-author {
-  @apply font-semibold text-gray-900;
+  @apply font-semibold;
+  color: var(--text-primary);
 }
 
 .comment-date {
-  @apply text-sm text-gray-500;
+  @apply text-sm;
+  color: var(--text-muted);
 }
 
 .comment-body {
-  @apply mt-2 text-gray-700;
+  @apply mt-2;
+  color: var(--text-secondary);
 }
 
-/* Tag styles */
+/* Tag styles - rectangular, not rounded */
 .tag {
-  @apply inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full mr-2 mb-2 hover:bg-blue-200 transition-colors;
+  background-color: var(--tag-bg);
+  color: var(--tag-text);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: opacity 0.2s ease;
+  display: inline-block;
+}
+
+.tag:hover {
+  opacity: 0.85;
+  color: var(--tag-text);
+}
+
+/* Blog header styles */
+.blog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.blog-header-content h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.blog-header-content p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Dark mode toggle */
+.dark-mode-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dark-mode-toggle:hover {
+  background: var(--border-color);
+}
+
+.dark-mode-toggle svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+}
+
+/* Article card styles */
+.article-card {
+  padding: 1.5rem 0;
+  border-bottom: 3px solid var(--accent-color);
+  margin-bottom: 1.5rem;
+}
+
+.article-card .card-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+}
+
+.article-card .card-title a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.article-card .card-title a:hover {
+  color: var(--accent-color);
+}
+
+.article-card .card-meta {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-card .card-excerpt {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.article-card .card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.article-card .card-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.article-card .comment-count {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.article-card .comment-count svg {
+  width: 18px;
+  height: 18px;
+}
+
+.article-card .read-article-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.2s ease;
+}
+
+.article-card .read-article-link:hover {
+  color: var(--accent-hover);
+}
+
+.article-card .read-article-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tags list in cards */
+.article-card .tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Article full view styles */
+.article-full {
+  padding-bottom: 2rem;
+}
+
+.article-full-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.article-full-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .article-full-title {
+    font-size: 3rem;
+  }
+}
+
+.article-full-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.article-full-meta .author {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.article-full-meta .separator {
+  color: var(--text-muted);
+}
+
+.article-full-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.article-full-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.article-full-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.article-full-stats .stat-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Tags list shared styles */
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Talks table styles */
+.talks-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.talks-table thead {
+  background-color: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.talks-table th {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.talks-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.15s ease;
+}
+
+.talks-table tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+.talks-table td {
+  color: var(--text-secondary);
+}
+
+.talks-table td:first-child {
+  color: var(--text-primary);
+}
+
+/* Comment body markdown styles */
+.comment-body a {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.comment-body a:hover {
+  opacity: 0.8;
+}
+
+.comment-body code {
+  background-color: var(--bg-secondary);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.comment-body pre {
+  background-color: #272822;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.comment-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.comment-body p {
+  margin-bottom: 0.75rem;
+}
+
+.comment-body p:last-child {
+  margin-bottom: 0;
 }
