@@ -255,9 +255,9 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
 
     let comments: any[] = []
     const normalizedPath = normalizePath(node.path?.alias || `/node/${node.drupal_internal__nid}`)
-    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO
+    const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
 
-    if (node.field_issue_comment_id && repo) {
+    if (node.field_issue_comment_id) {
       try {
         const response = await fetch(
           `https://api.github.com/repos/${repo}/issues/${node.field_issue_comment_id}/comments`,
