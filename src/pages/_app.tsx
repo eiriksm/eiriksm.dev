@@ -7,9 +7,6 @@ import Footer from "@/components/Footer"
 import Analytics from "@/components/Analytics"
 
 export default function App({ Component, pageProps }: AppProps) {
-  // Check if this is a blog listing page
-  const isBlogListing = pageProps.isBlogListing ?? false
-
   return (
     <>
       <Head>
@@ -50,7 +47,7 @@ export default function App({ Component, pageProps }: AppProps) {
       />
       <Analytics />
       <div className="flex flex-col min-h-screen">
-        <Header showBlogHeader={isBlogListing} />
+        <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           <Component {...pageProps} />
         </main>
