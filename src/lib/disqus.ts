@@ -2,28 +2,37 @@ import { readFileSync, existsSync } from "fs"
 import { join } from "path"
 import { XMLParser } from "fast-xml-parser"
 
-interface DisqusThread {
+export interface DisqusComment {
   id: string
-  link: string
-  commentCount: number
+  author: string
+  authorEmail?: string
+  body: string
+  createdAt: string
+  isAnonymous: boolean
 }
 
-let disqusCache: Map<string, number> | null = null
+interface DisqusData {
+  counts: Map<string, number>
+  comments: Map<string, DisqusComment[]>
+}
+
+let disqusCache: DisqusData | null = null
 
 /**
- * Parse disqus.xml and return comment counts by URL path
+ * Parse disqus.xml and return comment data by URL path
  */
-export function parseDisqusComments(): Map<string, number> {
+function parseDisqusData(): DisqusData {
   if (disqusCache) {
     return disqusCache
   }
 
-  const commentCounts = new Map<string, number>()
+  const counts = new Map<string, number>()
+  const comments = new Map<string, DisqusComment[]>()
   const disqusPath = join(process.cwd(), "disqus.xml")
 
   if (!existsSync(disqusPath)) {
-    disqusCache = commentCounts
-    return commentCounts
+    disqusCache = { counts, comments }
+    return disqusCache
   }
 
   try {
@@ -35,8 +44,8 @@ export function parseDisqusComments(): Map<string, number> {
     const result = parser.parse(xmlContent)
 
     if (!result.disqus) {
-      disqusCache = commentCounts
-      return commentCounts
+      disqusCache = { counts, comments }
+      return disqusCache
     }
 
     // Build thread ID to link mapping
@@ -60,7 +69,7 @@ export function parseDisqusComments(): Map<string, number> {
       }
     }
 
-    // Count posts per thread
+    // Parse posts (comments)
     const posts = result.disqus.post
     if (posts) {
       const postArray = Array.isArray(posts) ? posts : [posts]
@@ -78,42 +87,92 @@ export function parseDisqusComments(): Map<string, number> {
         if (threadRef) {
           const path = threadLinks.get(threadRef)
           if (path) {
-            const currentCount = commentCounts.get(path) || 0
-            commentCounts.set(path, currentCount + 1)
+            // Update count
+            const currentCount = counts.get(path) || 0
+            counts.set(path, currentCount + 1)
+
+            // Extract comment data
+            const isAnonymous = post.author?.isAnonymous === "true" || post.author?.isAnonymous === true
+            const comment: DisqusComment = {
+              id: post["@_dsq:id"] || `disqus-${Date.now()}-${Math.random()}`,
+              author: isAnonymous
+                ? (post.author?.name || "Anonymous")
+                : (post.author?.name || post.author?.username || "Unknown"),
+              authorEmail: post.author?.email,
+              body: post.message || "",
+              createdAt: post.createdAt || new Date().toISOString(),
+              isAnonymous,
+            }
+
+            // Add to comments map
+            const pathComments = comments.get(path) || []
+            pathComments.push(comment)
+            comments.set(path, pathComments)
           }
         }
       }
     }
 
-    console.log(`[disqus] Parsed ${commentCounts.size} threads with comments from disqus.xml`)
+    // Sort comments by date (oldest first)
+    for (const [path, pathComments] of comments) {
+      pathComments.sort((a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      )
+    }
+
+    console.log(`[disqus] Parsed ${counts.size} threads with comments from disqus.xml`)
   } catch (error) {
     console.warn("[disqus] Failed to parse disqus.xml:", error)
   }
 
-  disqusCache = commentCounts
-  return commentCounts
+  disqusCache = { counts, comments }
+  return disqusCache
+}
+
+/**
+ * Normalize path for matching
+ */
+function normalizePath(path: string): string {
+  // Remove trailing slash for consistent matching
+  return path.endsWith("/") ? path.slice(0, -1) : path
+}
+
+/**
+ * Find comments for a path (tries various path formats)
+ */
+function findForPath<T>(map: Map<string, T>, path: string): T | undefined {
+  const normalized = normalizePath(path)
+
+  // Try exact match
+  if (map.has(normalized)) {
+    return map.get(normalized)
+  }
+
+  // Try with trailing slash
+  if (map.has(normalized + "/")) {
+    return map.get(normalized + "/")
+  }
+
+  // Try original path
+  if (map.has(path)) {
+    return map.get(path)
+  }
+
+  return undefined
 }
 
 /**
  * Get comment count for a specific path from disqus.xml
  */
 export function getDisqusCommentCount(path: string): number {
-  const counts = parseDisqusComments()
+  const { counts } = parseDisqusData()
+  return findForPath(counts, path) || 0
+}
 
-  // Try exact match first
-  if (counts.has(path)) {
-    return counts.get(path)!
-  }
-
-  // Try with trailing slash
-  if (counts.has(path + "/")) {
-    return counts.get(path + "/")!
-  }
-
-  // Try without trailing slash
-  if (path.endsWith("/") && counts.has(path.slice(0, -1))) {
-    return counts.get(path.slice(0, -1))!
-  }
-
-  return 0
+/**
+ * Get full comments for a specific path from disqus.xml
+ */
+export function getDisqusComments(path: string): DisqusComment[] {
+  const { comments } = parseDisqusData()
+  return findForPath(comments, path) || []
 }
