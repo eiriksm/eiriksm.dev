@@ -1,3 +1,5 @@
+import { promises as fs } from "fs"
+import path from "path"
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
 import {
@@ -33,10 +35,7 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
   const url = absoluteUrl(path)
   const excerpt = node.body?.summary || node.body?.value?.substring(0, 160)
   const readTime = estimateReadTime(node.body?.value || "")
-  const imageUrl = node.field_image?.uri?.url
-  const resolvedImageUrl = imageUrl
-    ? (imageUrl.startsWith("http") ? imageUrl : absoluteUrl(imageUrl))
-    : null
+  const imagePath = node.field_image?.uri?.url
   // Total comment count from both sources
   const commentCount = comments.length + disqusComments.length
 
@@ -98,14 +97,14 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
           dangerouslySetInnerHTML={{ __html: node.body?.value || "" }}
         />
 
-        {resolvedImageUrl && (
+        {imagePath && (
           <div className="mt-10">
             <img
               alt={node.title}
               className="mx-auto"
               decoding="async"
               loading="lazy"
-              src={resolvedImageUrl}
+              src={imagePath}
             />
           </div>
         )}
@@ -276,8 +275,41 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
       }
     }
 
-    let comments: any[] = []
     const normalizedPath = normalizePath(node.path?.alias || `/node/${node.drupal_internal__nid}`)
+    let comments: any[] = []
+    let imagePath = node.field_image?.uri?.url
+    const drupalBaseUrl = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "https://example.com"
+
+    if (imagePath) {
+      try {
+        const imageUrl = new URL(imagePath, drupalBaseUrl)
+        const localPathname = imageUrl.pathname
+        const publicRoot = path.join(process.cwd(), "public")
+        const localFilePath = path.join(publicRoot, localPathname)
+        const normalizedLocalFilePath = path.normalize(localFilePath)
+
+        if (!normalizedLocalFilePath.startsWith(publicRoot)) {
+          throw new Error(`Invalid image path: ${localPathname}`)
+        }
+
+        await fs.mkdir(path.dirname(normalizedLocalFilePath), { recursive: true })
+
+        try {
+          await fs.access(normalizedLocalFilePath)
+        } catch {
+          const response = await fetch(imageUrl.toString())
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image ${imageUrl} (${response.status})`)
+          }
+          const arrayBuffer = await response.arrayBuffer()
+          await fs.writeFile(normalizedLocalFilePath, Buffer.from(arrayBuffer))
+        }
+
+        imagePath = localPathname
+      } catch (error) {
+        console.warn(`[getStaticProps] Failed to cache image locally for ${normalizedPath}:`, error)
+      }
+    }
     const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
 
     if (node.field_issue_comment_id) {
@@ -312,7 +344,10 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
 
     return {
       props: {
-        node,
+        node: {
+          ...node,
+          field_image: imagePath ? { ...node.field_image, uri: { ...node.field_image?.uri, url: imagePath } } : node.field_image,
+        },
         comments,
         disqusComments,
       },
