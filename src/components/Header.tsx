@@ -2,6 +2,8 @@ import Link from "next/link"
 import DarkModeToggle from "./DarkModeToggle"
 
 export default function Header() {
+  const showMenu = process.env.NEXT_PUBLIC_SHOW_MENU === "1"
+
   return (
     <header style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -14,37 +16,39 @@ export default function Header() {
             eiriksm.dev
           </Link>
           <div className="flex items-center gap-6">
-            <nav>
-              <ul className="flex space-x-6">
-                <li>
-                  <Link
-                    href="/"
-                    className="transition-colors"
-                    style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
-                  >
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="transition-colors"
-                    style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
-                  >
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/talks"
-                    className="transition-colors"
-                    style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
-                  >
-                    Talks
-                  </Link>
-                </li>
-              </ul>
-            </nav>
+            {showMenu ? (
+              <nav>
+                <ul className="flex space-x-6">
+                  <li>
+                    <Link
+                      href="/"
+                      className="transition-colors"
+                      style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+                    >
+                      Blog
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/about"
+                      className="transition-colors"
+                      style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+                    >
+                      About
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/talks"
+                      className="transition-colors"
+                      style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+                    >
+                      Talks
+                    </Link>
+                  </li>
+                </ul>
+              </nav>
+            ) : null}
             <DarkModeToggle />
           </div>
         </div>
