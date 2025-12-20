@@ -94,6 +94,10 @@ pre[class*="language-"] {
   white-space: normal;
 }
 
+:not(pre) > code[class*="language-"] .token {
+  color: inherit;
+}
+
 .token.comment,
 .token.prolog,
 .token.doctype,
