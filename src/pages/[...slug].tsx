@@ -33,6 +33,10 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
   const url = absoluteUrl(path)
   const excerpt = node.body?.summary || node.body?.value?.substring(0, 160)
   const readTime = estimateReadTime(node.body?.value || "")
+  const imageUrl = node.field_image?.uri?.url
+  const resolvedImageUrl = imageUrl
+    ? (imageUrl.startsWith("http") ? imageUrl : absoluteUrl(imageUrl))
+    : null
   // Total comment count from both sources
   const commentCount = comments.length + disqusComments.length
 
@@ -93,6 +97,18 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
           className="article-body blog-content prose prose-lg max-w-none"
           dangerouslySetInnerHTML={{ __html: node.body?.value || "" }}
         />
+
+        {resolvedImageUrl && (
+          <div className="mt-10">
+            <img
+              alt={node.title}
+              className="mx-auto"
+              decoding="async"
+              loading="lazy"
+              src={resolvedImageUrl}
+            />
+          </div>
+        )}
 
         {(node.field_issue_comment_id || disqusComments.length > 0) && (
           <Comments
