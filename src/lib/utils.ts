@@ -1,24 +1,27 @@
 import { DrupalNode } from "next-drupal"
 
-export function formatDate(input: string | number): string {
-  // Drupal timestamps are in seconds, convert to milliseconds
-  const timestamp = typeof input === "number" ? input * 1000 : input
-  const date = new Date(timestamp)
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })
-}
-
 export function toUnixMillis(input: string | number | undefined): number {
   if (typeof input === "number") {
     return input * 1000
   }
   if (typeof input === "string") {
-    return Date.parse(input)
+    const trimmed = input.trim()
+    if (/^\d+$/.test(trimmed)) {
+      return Number(trimmed) * 1000
+    }
+    const parsed = Date.parse(trimmed)
+    return Number.isNaN(parsed) ? 0 : parsed
   }
   return 0
+}
+
+export function formatDate(input: string | number): string {
+  const date = new Date(toUnixMillis(input))
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
 export function absoluteUrl(input: string) {
