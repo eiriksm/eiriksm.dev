@@ -93,11 +93,15 @@ export default function Comments({ issueId, initialComments = [], disqusComments
   )
 
   useEffect(() => {
-    if (initialComments.length > 0 || !issueId) {
+    if (!issueId) {
       return
     }
 
     const fetchComments = async () => {
+      if (initialComments.length === 0) {
+        setLoading(true)
+      }
+
       try {
         const response = await fetch(
           `https://api.github.com/repos/${repo}/issues/${issueId}/comments`,
@@ -115,7 +119,9 @@ export default function Comments({ issueId, initialComments = [], disqusComments
         const data = await response.json()
         setGithubComments(data)
       } catch (err) {
-        setError("Failed to load comments")
+        if (initialComments.length === 0) {
+          setError("Failed to load comments")
+        }
         console.error(err)
       } finally {
         setLoading(false)
