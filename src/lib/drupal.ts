@@ -42,8 +42,27 @@ export async function getAllResources<TResource>(
 ): Promise<TResource[]> {
   const allResources: TResource[] = []
   const baseParams = paramsBuilder?.getQueryObject() || {}
-  let offset = 0
+  const seenIds = new Set<string>()
 
+  const getResourceId = (resource: TResource) =>
+    String((resource as any)?.id ?? "")
+
+  const appendNewResources = (resources: TResource[]) => {
+    let added = 0
+    for (const resource of resources) {
+      const id = getResourceId(resource)
+      if (!id || !seenIds.has(id)) {
+        if (id) {
+          seenIds.add(id)
+        }
+        allResources.push(resource)
+        added += 1
+      }
+    }
+    return added
+  }
+
+  let offset = 0
   while (true) {
     const params = {
       ...baseParams,
@@ -62,13 +81,12 @@ export async function getAllResources<TResource>(
       break
     }
 
-    allResources.push(...resources)
-
-    if (resources.length < pageSize) {
+    const added = appendNewResources(resources)
+    if (added === 0) {
       break
     }
 
-    offset += pageSize
+    offset += resources.length
   }
 
   return allResources

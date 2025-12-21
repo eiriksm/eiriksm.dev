@@ -2,7 +2,7 @@ import { DrupalNode } from "next-drupal"
 
 export function formatDate(input: string | number): string {
   // Drupal timestamps are in seconds, convert to milliseconds
-  const timestamp = typeof input === 'number' ? input * 1000 : input
+  const timestamp = typeof input === "number" ? input * 1000 : input
   const date = new Date(timestamp)
   return date.toLocaleDateString("en-US", {
     month: "long",
