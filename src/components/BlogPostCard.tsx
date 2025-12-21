@@ -15,8 +15,8 @@ export default function BlogPostCard({ node, commentCount = 0 }: BlogPostCardPro
   const tags = node.field_tags || []
 
   return (
-    <article className="article-card">
-      <h2 className="card-title">
+    <article className="article-card node node--view-mode-teaser">
+      <h2 className="card-title node__title">
         <Link href={path}>
           {node.title}
         </Link>
@@ -35,7 +35,7 @@ export default function BlogPostCard({ node, commentCount = 0 }: BlogPostCardPro
       )}
 
       {tags.length > 0 && (
-        <div className="tags-list">
+        <div className="tags-list clearfix field-type-taxonomy-term-reference">
           {tags.map((tag: any) => (
             <Link
               key={tag.id}
