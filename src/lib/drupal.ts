@@ -42,28 +42,87 @@ export async function getAllResources<TResource>(
 ): Promise<TResource[]> {
   const allResources: TResource[] = []
   const baseParams = paramsBuilder?.getQueryObject() || {}
-  let offset = 0
+  const seenIds = new Set<string>()
 
-  while (true) {
-    const params = {
-      ...baseParams,
-      "page[limit]": pageSize,
-      "page[offset]": offset,
-    }
+  const getResourceId = (resource: TResource) =>
+    String((resource as any)?.id ?? "")
 
-    const resources = await drupal.getResourceCollection<TResource[]>(
-      resourceType,
-      {
-        params,
+  const appendNewResources = (resources: TResource[]) => {
+    let added = 0
+    for (const resource of resources) {
+      const id = getResourceId(resource)
+      if (!id || !seenIds.has(id)) {
+        if (id) {
+          seenIds.add(id)
+        }
+        allResources.push(resource)
+        added += 1
       }
-    )
-
-    if (!resources.length) {
-      break
     }
+    return added
+  }
 
-    allResources.push(...resources)
-    offset += resources.length
+  const fetchByOffset = async () => {
+    let offset = 0
+    while (true) {
+      const params = {
+        ...baseParams,
+        "page[limit]": pageSize,
+        "page[offset]": offset,
+      }
+
+      const resources = await drupal.getResourceCollection<TResource[]>(
+        resourceType,
+        {
+          params,
+        }
+      )
+
+      if (!resources.length) {
+        return true
+      }
+
+      const added = appendNewResources(resources)
+      if (added === 0) {
+        return false
+      }
+
+      offset += resources.length
+    }
+  }
+
+  const fetchByPageNumber = async () => {
+    let pageNumber = 0
+    while (true) {
+      const params = {
+        ...baseParams,
+        "page[limit]": pageSize,
+        "page[number]": pageNumber,
+      }
+
+      const resources = await drupal.getResourceCollection<TResource[]>(
+        resourceType,
+        {
+          params,
+        }
+      )
+
+      if (!resources.length) {
+        break
+      }
+
+      const added = appendNewResources(resources)
+      if (added === 0) {
+        break
+      }
+
+      pageNumber += 1
+    }
+  }
+
+  const offsetModeCompleted = await fetchByOffset()
+  if (!offsetModeCompleted) {
+    await fetchByPageNumber()
   }
 
   return allResources
