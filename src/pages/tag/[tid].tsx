@@ -32,7 +32,7 @@ export default function TagPage({ term, nodes }: TagPageProps) {
           </p>
         </header>
 
-        <div>
+        <div className="term-list">
           {nodes.map((node) => (
             <BlogPostCard key={node.id} node={node} />
           ))}

@@ -56,7 +56,7 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
 
       <article className="article-full max-w-4xl mx-auto">
         <header className="article-full-header">
-          <h1 className="article-full-title">
+          <h1 id="page-title" className="article-full-title">
             {node.title}
           </h1>
 
