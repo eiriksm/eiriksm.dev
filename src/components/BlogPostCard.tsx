@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { DrupalNode } from "next-drupal"
-import { formatDate, getNodePath, extractExcerpt, toUnixMillis } from "@/lib/utils"
+import { formatDate, getNodePath, extractExcerpt } from "@/lib/utils"
 import { FaComment } from "react-icons/fa"
 import { HiArrowRight } from "react-icons/hi"
 
@@ -23,7 +23,7 @@ export default function BlogPostCard({ node, commentCount = 0 }: BlogPostCardPro
       </h2>
 
       <div className="card-meta">
-        <time dateTime={new Date(toUnixMillis(node.created as any)).toISOString()}>
+        <time dateTime={new Date((node.created as unknown as number) * 1000).toISOString()}>
           {formatDate(node.created)}
         </time>
       </div>

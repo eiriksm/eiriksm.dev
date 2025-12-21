@@ -7,7 +7,7 @@ import Pagination from "@/components/Pagination"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import { generatePlanetFeed } from "@/lib/planet-feed"
 import { getDisqusCommentCount } from "@/lib/disqus"
-import { getNodePath, toUnixMillis } from "@/lib/utils"
+import { getNodePath } from "@/lib/utils"
 
 const POSTS_PER_PAGE = 10
 
@@ -85,7 +85,7 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
 
     const allNodes = (fetchedNodes as unknown as any[])
       .slice()
-      .sort((a, b) => toUnixMillis(b.created) - toUnixMillis(a.created))
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
 
     const totalPosts = allNodes.length
     await generatePlanetFeed(allNodes)

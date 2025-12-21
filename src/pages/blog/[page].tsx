@@ -6,7 +6,7 @@ import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import { getDisqusCommentCount } from "@/lib/disqus"
-import { getNodePath, toUnixMillis } from "@/lib/utils"
+import { getNodePath } from "@/lib/utils"
 
 const POSTS_PER_PAGE = 10
 
@@ -73,7 +73,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
       await getAllResources<DrupalNode>("node--article", apiParams)
     )
       .slice()
-      .sort((a, b) => toUnixMillis(b.created) - toUnixMillis(a.created))
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
 
     const totalPages = Math.ceil(nodes.length / POSTS_PER_PAGE)
     const paths: Array<{ params: { page: string } }> = []
@@ -119,7 +119,7 @@ export const getStaticProps: GetStaticProps<BlogPageProps> = async ({ params }) 
       await getAllResources<DrupalNode>("node--article", apiParams)
     )
       .slice()
-      .sort((a, b) => toUnixMillis(b.created) - toUnixMillis(a.created))
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
 
     const totalPosts = allNodes.length
     const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)

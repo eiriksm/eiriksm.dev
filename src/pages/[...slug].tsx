@@ -10,7 +10,7 @@ import {
   normalizePath,
 } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
-import { formatDate, absoluteUrl, toUnixMillis } from "@/lib/utils"
+import { formatDate, absoluteUrl } from "@/lib/utils"
 import Comments from "@/components/Comments"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import Link from "next/link"
@@ -48,7 +48,7 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
         <meta property="og:description" content={excerpt} />
         <meta property="og:url" content={url} />
         <meta property="og:type" content="article" />
-        <meta property="article:published_time" content={new Date(toUnixMillis(node.created as any)).toISOString()} />
+        <meta property="article:published_time" content={new Date((node.created as unknown as number) * 1000).toISOString()} />
         <meta property="article:author" content="Eirik S. Morland" />
         <meta name="twitter:title" content={node.title} />
         <meta name="twitter:description" content={excerpt} />
@@ -63,7 +63,7 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
           <div className="article-full-meta">
             <span className="author">Eirik S. Morland</span>
             <span className="separator">•</span>
-            <time dateTime={new Date(toUnixMillis(node.created as any)).toISOString()}>
+            <time dateTime={new Date((node.created as unknown as number) * 1000).toISOString()}>
               {formatDate(node.created)}
             </time>
             <span className="separator">•</span>
@@ -125,7 +125,7 @@ export default function BlogPostPage({ node, comments = [], disqusComments = [] 
               "@context": "https://schema.org",
               "@type": "BlogPosting",
               headline: node.title,
-              datePublished: new Date(toUnixMillis(node.created as any)).toISOString(),
+              datePublished: new Date((node.created as unknown as number) * 1000).toISOString(),
               author: {
                 "@type": "Person",
                 name: "Eirik S. Morland",
