@@ -43,6 +43,7 @@ export async function getAllResources<TResource>(
   const allResources: TResource[] = []
   const baseParams = paramsBuilder?.getQueryObject() || {}
   const seenIds = new Set<string>()
+  const paginationMode = (process.env.DRUPAL_PAGINATION_MODE || "offset").toLowerCase()
 
   const getResourceId = (resource: TResource) =>
     String((resource as any)?.id ?? "")
@@ -84,7 +85,7 @@ export async function getAllResources<TResource>(
 
       const added = appendNewResources(resources)
       if (added === 0) {
-        return false
+        return
       }
 
       offset += resources.length
@@ -113,16 +114,17 @@ export async function getAllResources<TResource>(
 
       const added = appendNewResources(resources)
       if (added === 0) {
-        break
+        return
       }
 
       pageNumber += 1
     }
   }
 
-  const offsetModeCompleted = await fetchByOffset()
-  if (!offsetModeCompleted) {
+  if (paginationMode === "page") {
     await fetchByPageNumber()
+  } else {
+    await fetchByOffset()
   }
 
   return allResources
