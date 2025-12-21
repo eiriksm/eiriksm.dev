@@ -43,7 +43,6 @@ export async function getAllResources<TResource>(
   const allResources: TResource[] = []
   const baseParams = paramsBuilder?.getQueryObject() || {}
   const seenIds = new Set<string>()
-  const paginationMode = (process.env.DRUPAL_PAGINATION_MODE || "offset").toLowerCase()
 
   const getResourceId = (resource: TResource) =>
     String((resource as any)?.id ?? "")
@@ -63,68 +62,31 @@ export async function getAllResources<TResource>(
     return added
   }
 
-  const fetchByOffset = async () => {
-    let offset = 0
-    while (true) {
-      const params = {
-        ...baseParams,
-        "page[limit]": pageSize,
-        "page[offset]": offset,
-      }
-
-      const resources = await drupal.getResourceCollection<TResource[]>(
-        resourceType,
-        {
-          params,
-        }
-      )
-
-      if (!resources.length) {
-        return true
-      }
-
-      const added = appendNewResources(resources)
-      if (added === 0) {
-        return
-      }
-
-      offset += resources.length
+  let offset = 0
+  while (true) {
+    const params = {
+      ...baseParams,
+      "page[limit]": pageSize,
+      "page[offset]": offset,
     }
-  }
 
-  const fetchByPageNumber = async () => {
-    let pageNumber = 0
-    while (true) {
-      const params = {
-        ...baseParams,
-        "page[limit]": pageSize,
-        "page[number]": pageNumber,
+    const resources = await drupal.getResourceCollection<TResource[]>(
+      resourceType,
+      {
+        params,
       }
+    )
 
-      const resources = await drupal.getResourceCollection<TResource[]>(
-        resourceType,
-        {
-          params,
-        }
-      )
-
-      if (!resources.length) {
-        break
-      }
-
-      const added = appendNewResources(resources)
-      if (added === 0) {
-        return
-      }
-
-      pageNumber += 1
+    if (!resources.length) {
+      break
     }
-  }
 
-  if (paginationMode === "page") {
-    await fetchByPageNumber()
-  } else {
-    await fetchByOffset()
+    const added = appendNewResources(resources)
+    if (added === 0) {
+      break
+    }
+
+    offset += resources.length
   }
 
   return allResources
