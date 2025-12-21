@@ -63,12 +63,7 @@ export async function getAllResources<TResource>(
     }
 
     allResources.push(...resources)
-
-    if (resources.length < pageSize) {
-      break
-    }
-
-    offset += pageSize
+    offset += resources.length
   }
 
   return allResources
