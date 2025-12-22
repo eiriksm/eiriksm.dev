@@ -19,7 +19,7 @@ default:
     DrevOps\BehatScreenshotExtension:
       dir: '%paths.base%/screenshots'
       fail: true
-      fail_prefix: 'failed_'
+      failed_prefix: 'failed_'
       purge: false
     Behat\MinkExtension:
       files_path: '%paths.base%/tests/files'
