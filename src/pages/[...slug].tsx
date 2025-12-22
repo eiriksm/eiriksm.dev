@@ -16,6 +16,7 @@ import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import Link from "next/link"
 import { FaComment } from "react-icons/fa"
 import { getDisqusComments, type DisqusComment } from "@/lib/disqus"
+import { getIssueCommentsUrl } from "@/lib/github"
 
 interface BlogPostPageProps {
   node: DrupalNode
@@ -315,7 +316,7 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
     if (node.field_issue_comment_id) {
       try {
         const response = await fetch(
-          `https://api.github.com/repos/${repo}/issues/${node.field_issue_comment_id}/comments`,
+          getIssueCommentsUrl(node.field_issue_comment_id, repo),
           {
             headers: process.env.GITHUB_TOKEN
               ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }

@@ -8,6 +8,7 @@ import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import { generatePlanetFeed } from "@/lib/planet-feed"
 import { getDisqusCommentCount } from "@/lib/disqus"
 import { getNodePath } from "@/lib/utils"
+import { getIssueUrl } from "@/lib/github"
 
 const POSTS_PER_PAGE = 10
 
@@ -24,7 +25,7 @@ interface HomePageProps {
 async function fetchCommentCount(issueId: string, repo: string): Promise<number> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${repo}/issues/${issueId}`,
+      getIssueUrl(issueId, repo),
       {
         headers: process.env.GITHUB_TOKEN
           ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
