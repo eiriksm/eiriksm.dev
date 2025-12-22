@@ -44,7 +44,10 @@ jobs:
         run: wget ${{ secrets.DISQUS_XML_URL }} -O disqus.xml
 
       - name: Install node dependencies
-        run: npm i
+        run:  |
+          npm i
+          # Also install pm2 globally.
+          npm install -g pm2
 
       - name: Build the site
         run: npm run build
@@ -57,7 +60,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start the serving of the site
-        run: npx --yes serve@latest -l tcp://0.0.0.0:9000 out &
+        run: pm2 start "npx --yes serve@latest -l tcp://0.0.0.0:9000 out" --name server
 
       - name: Make sure serving has started
         run: ./vendor/bin/wait-for-listen 9000
@@ -70,3 +73,8 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+      - name: Stop the site serving and display pm2 logs
+        run: |
+          pm2 logs server --lines 10000
+          pm2 delete server
