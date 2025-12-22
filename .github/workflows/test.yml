@@ -65,9 +65,6 @@ jobs:
       - name: Make sure serving has started
         run: ./vendor/bin/wait-for-listen 9000
 
-      - name: Debug
-        run: docker run --rm --entrypoint="" nymediaas/chrome-headless:89 ifconfig
-
       - name: Make a directory we need
         run: mkdir -p public/ci_issues
 
@@ -77,7 +74,7 @@ jobs:
       - name: Stop the site serving and display pm2 logs
         if: always()
         run: |
-          pm2 logs server --lines 10000
+          pm2 logs server --nostream --lines 10000
           pm2 delete server
 
       - uses: actions/upload-artifact@v6
