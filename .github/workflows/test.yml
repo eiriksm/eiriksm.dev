@@ -75,6 +75,7 @@ jobs:
         run: composer test
 
       - name: Stop the site serving and display pm2 logs
+        if: always()
         run: |
           pm2 logs server --lines 10000
           pm2 delete server
