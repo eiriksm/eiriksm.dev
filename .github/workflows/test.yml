@@ -9,7 +9,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     services:
       chromedriver:
-        image: nymediaas/chrome-headless:89
+        image: nymediaas/chrome-headless
         ports:
           - 8643:8643
     strategy:
@@ -67,7 +67,7 @@ jobs:
         run: ./vendor/bin/wait-for-listen 9000
 
       - name: Debug
-        run: docker run --rm --entrypoint="" nymediaas/chrome-headless:89 ifconfig
+        run: docker run --rm --entrypoint="" nymediaas/chrome-headless ifconfig
 
       - name: Make a directory we need
         run: |
