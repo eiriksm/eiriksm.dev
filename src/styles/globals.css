@@ -14,8 +14,8 @@
   --accent-hover: #0d9488;
   --link-color: #2563eb;
   --link-hover: #1d4ed8;
-  --comment-code-bg: #e5e7eb;
-  --comment-code-text: #111827;
+  --comment-code-bg: #1f2937;
+  --comment-code-text: #f9fafb;
   --comment-pre-bg: #1f2937;
   --comment-pre-text: #f9fafb;
   --tag-bg: #14b8a6;
@@ -242,6 +242,7 @@ html.dark .article-body {
 .comment {
   @apply mb-6 p-4 rounded-lg;
   background-color: var(--bg-secondary);
+  overflow-x: hidden;
 }
 
 .comment-author {
@@ -257,6 +258,8 @@ html.dark .article-body {
 .comment-body {
   @apply mt-2;
   color: var(--text-secondary);
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 /* Tag styles - rectangular, not rounded */
@@ -555,6 +558,7 @@ html.dark .article-body {
   padding: 1rem;
   border-radius: 6px;
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .comment-body pre code {
