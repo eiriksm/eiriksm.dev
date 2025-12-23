@@ -19,20 +19,20 @@ export default function Pagination({ currentPage, totalPages, basePath = "/blog"
       {currentPage > 1 && (
         <Link
           href={getPagePath(currentPage - 1)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 text-[var(--link-color)] hover:text-[var(--link-hover)] transition-colors"
         >
           ← Previous
         </Link>
       )}
 
-      <span className="text-gray-700">
+      <span className="text-[var(--text-secondary)]">
         Page {currentPage} of {totalPages}
       </span>
 
       {currentPage < totalPages && (
         <Link
           href={getPagePath(currentPage + 1)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 text-[var(--link-color)] hover:text-[var(--link-hover)] transition-colors"
         >
           Next →
         </Link>
