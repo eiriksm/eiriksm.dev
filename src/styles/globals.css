@@ -242,7 +242,6 @@ html.dark .article-body {
 .comment {
   @apply mb-6 p-4 rounded-lg;
   background-color: var(--bg-secondary);
-  overflow-x: hidden;
 }
 
 .comment-author {
