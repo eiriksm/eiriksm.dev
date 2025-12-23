@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import { formatDate } from "@/lib/utils"
 import type { DisqusComment } from "@/lib/disqus"
 import { parseCommentBody } from "@/lib/comment-parser"
+import { getIssueCommentsUrl } from "@/lib/github"
 
 interface GitHubComment {
   id: number
@@ -104,7 +105,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
 
       try {
         const response = await fetch(
-          `https://api.github.com/repos/${repo}/issues/${issueId}/comments`,
+          getIssueCommentsUrl(issueId, repo),
           {
             headers: process.env.GITHUB_TOKEN
               ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
