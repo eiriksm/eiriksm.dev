@@ -242,6 +242,7 @@ html.dark .article-body {
 .comment {
   @apply mb-6 p-4 rounded-lg;
   background-color: var(--bg-secondary);
+  min-width: 0;
 }
 
 .comment-author {
@@ -257,8 +258,7 @@ html.dark .article-body {
 .comment-body {
   @apply mt-2;
   color: var(--text-secondary);
-  overflow-x: auto;
-  max-width: 100%;
+  min-width: 0;
 }
 
 /* Tag styles - rectangular, not rounded */
@@ -557,7 +557,8 @@ html.dark .article-body {
   padding: 1rem;
   border-radius: 6px;
   overflow-x: auto;
-  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .comment-body pre code {
