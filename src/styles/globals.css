@@ -14,8 +14,8 @@
   --accent-hover: #0d9488;
   --link-color: #2563eb;
   --link-hover: #1d4ed8;
-  --comment-code-bg: #e5e7eb;
-  --comment-code-text: #111827;
+  --comment-code-bg: #1f2937;
+  --comment-code-text: #f9fafb;
   --comment-pre-bg: #1f2937;
   --comment-pre-text: #f9fafb;
   --tag-bg: #14b8a6;
@@ -554,7 +554,7 @@ html.dark .article-body {
   color: var(--comment-pre-text);
   padding: 1rem;
   border-radius: 6px;
-  overflow-x: auto;
+  @apply overflow-x-auto w-full;
 }
 
 .comment-body pre code {
