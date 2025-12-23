@@ -67,7 +67,7 @@ jobs:
         run: ./vendor/bin/wait-for-listen 9000
 
       - name: Make a directory we need
-        run: mkdir -p public/ci_issues
+        run: mkdir -p out/ci_issues
 
       - name: Run tests
         run: composer test

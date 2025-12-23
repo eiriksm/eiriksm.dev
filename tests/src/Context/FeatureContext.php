@@ -148,7 +148,7 @@ class FeatureContext extends RawDrupalContext {
    * @Then /^I create an empty comment file in the last issue$/
    */
   public function iCreateAnEmptyCommentFileInTheLastIssue() {
-    $dir = __DIR__ . '/../../../public/ci_issues/' . $this->lastIssueId;
+    $dir = __DIR__ . '/../../../out/ci_issues/' . $this->lastIssueId;
     @mkdir($dir);
     file_put_contents($dir . '/comments', '[]');
   }
@@ -164,7 +164,7 @@ class FeatureContext extends RawDrupalContext {
    * @Then /^I place a comment in the last issue$/
    */
   public function iPlaceACommentInTheLastIssue() {
-    $dir = __DIR__ . '/../../../public/ci_issues/' . $this->lastIssueId;
+    $dir = __DIR__ . '/../../../out/ci_issues/' . $this->lastIssueId;
     @mkdir($dir);
     file_put_contents($dir . '/comments', '[
   {
