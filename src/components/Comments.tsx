@@ -216,7 +216,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
                   alt={comment.author}
                   className="w-10 h-10 rounded-full"
                 />
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     {comment.authorUrl ? (
                       <a
@@ -241,7 +241,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
                     )}
                   </div>
                   <div
-                    className="comment-body prose prose-sm max-w-full min-w-0"
+                    className="comment-body prose prose-sm w-full max-w-full min-w-0"
                     style={{ color: 'var(--text-secondary)' }}
                     dangerouslySetInnerHTML={{ __html: parseCommentBody(comment.body) }}
                   />
