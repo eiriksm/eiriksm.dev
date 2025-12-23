@@ -9,7 +9,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     services:
       chromedriver:
-        image: nymediaas/chrome-headless
+        image: ghcr.io/nymedia/chrome-headless:with-chromedriver
         ports:
           - 8643:8643
     strategy:
