@@ -14,6 +14,14 @@ jobs:
           - 8643:8643
     strategy:
       fail-fast: false
+    env:
+      NEXT_PUBLIC_DRUPAL_BASE_URL:  ${{ secrets.API_URL }}
+      ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
+      NEXT_PUBLIC_ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
+      BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
+      BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
+      API_URL: ${{ secrets.API_URL }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -51,14 +59,6 @@ jobs:
 
       - name: Build the site
         run: npm run build
-        env:
-          NEXT_PUBLIC_DRUPAL_BASE_URL:  ${{ secrets.API_URL }}
-          ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
-          NEXT_PUBLIC_ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
-          BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
-          BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
-          API_URL: ${{ secrets.API_URL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start the serving of the site
         run: pm2 start "npx --yes serve@latest -l tcp://0.0.0.0:9000 out" --name server
