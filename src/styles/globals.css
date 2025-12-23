@@ -239,10 +239,16 @@ html.dark .article-body {
 }
 
 /* Comment styles */
+.comment-wrapper {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 .comment {
   @apply mb-6 p-4 rounded-lg;
   background-color: var(--bg-secondary);
   min-width: 0;
+  max-width: 100%;
 }
 
 .comment-author {
@@ -259,6 +265,8 @@ html.dark .article-body {
   @apply mt-2;
   color: var(--text-secondary);
   min-width: 0;
+  max-width: 100% !important;
+  overflow-wrap: break-word;
 }
 
 /* Tag styles - rectangular, not rounded */
