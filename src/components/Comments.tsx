@@ -241,7 +241,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
                     )}
                   </div>
                   <div
-                    className="comment-body prose prose-sm max-w-none"
+                    className="comment-body prose prose-sm max-w-full min-w-0"
                     style={{ color: 'var(--text-secondary)' }}
                     dangerouslySetInnerHTML={{ __html: parseCommentBody(comment.body) }}
                   />
