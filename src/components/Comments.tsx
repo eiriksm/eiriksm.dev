@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { formatDate } from "@/lib/utils"
+import type { DisqusComment } from "@/lib/disqus"
 import { parseCommentBody } from "@/lib/comment-parser"
 import { getIssueCommentsUrl } from "@/lib/github"
 
@@ -24,12 +25,13 @@ interface UnifiedComment {
   authorUrl?: string
   createdAt: string
   body: string
-  source: "github"
+  source: "github" | "disqus"
 }
 
 interface CommentsProps {
   issueId?: string
   initialComments?: GitHubComment[]
+  disqusComments?: DisqusComment[]
 }
 
 function normalizeGitHubComment(comment: GitHubComment): UnifiedComment {
@@ -44,6 +46,16 @@ function normalizeGitHubComment(comment: GitHubComment): UnifiedComment {
   }
 }
 
+function normalizeDisqusComment(comment: DisqusComment): UnifiedComment {
+  return {
+    id: `disqus-${comment.id}`,
+    author: comment.author,
+    createdAt: comment.createdAt,
+    body: comment.body,
+    source: "disqus",
+  }
+}
+
 function getGravatarUrl(email?: string): string {
   // Default avatar for anonymous/unknown users
   if (!email) {
@@ -53,7 +65,7 @@ function getGravatarUrl(email?: string): string {
   return `https://www.gravatar.com/avatar/?d=identicon&s=40`
 }
 
-export default function Comments({ issueId, initialComments = [] }: CommentsProps) {
+export default function Comments({ issueId, initialComments = [], disqusComments = [] }: CommentsProps) {
   const [githubComments, setGithubComments] = useState<GitHubComment[]>(initialComments)
   const [loading, setLoading] = useState(initialComments.length === 0 && !!issueId)
   const [error, setError] = useState<string | null>(null)
@@ -62,8 +74,9 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
 
   // Merge and sort all comments by date
   const allComments: UnifiedComment[] = useMemo(() => [
+    ...disqusComments.map(normalizeDisqusComment),
     ...githubComments.map(normalizeGitHubComment),
-  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()), [githubComments])
+  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()), [disqusComments, githubComments])
 
   const commentCount = allComments.length
   const commentCountDisplay = `${commentCount}`.padStart(2, "0")
@@ -147,7 +160,7 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
     )
   }
 
-  if (error) {
+  if (error && disqusComments.length === 0) {
     return (
       <div className="comment-wrapper border-t-2 my-2 py-1 mt-12 pt-8" style={{ borderColor: 'var(--border-color)' }}>
         {commentHeader}
@@ -221,6 +234,11 @@ export default function Comments({ issueId, initialComments = [] }: CommentsProp
                     <span className="comment-date" style={{ color: 'var(--text-muted)' }}>
                       {formatDate(comment.createdAt)}
                     </span>
+                    {comment.source === "disqus" && (
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                        via Disqus
+                      </span>
+                    )}
                   </div>
                   <div
                     className="comment-body prose prose-sm w-full max-w-full min-w-0"

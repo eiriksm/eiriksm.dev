@@ -15,11 +15,13 @@ import Comments from "@/components/Comments"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import Link from "next/link"
 import { FaComment } from "react-icons/fa"
+import { getDisqusComments, type DisqusComment } from "@/lib/disqus"
 import { getIssueCommentsUrl } from "@/lib/github"
 
 interface BlogPostPageProps {
   node: DrupalNode
   comments?: any[]
+  disqusComments?: DisqusComment[]
 }
 
 function estimateReadTime(html: string): number {
@@ -28,14 +30,15 @@ function estimateReadTime(html: string): number {
   return Math.max(1, Math.ceil(words / 200))
 }
 
-export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps) {
+export default function BlogPostPage({ node, comments = [], disqusComments = [] }: BlogPostPageProps) {
   const tags = node.field_tags || []
   const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
   const url = absoluteUrl(path)
   const excerpt = node.body?.summary || node.body?.value?.substring(0, 160)
   const readTime = estimateReadTime(node.body?.value || "")
   const imagePath = node.field_image?.uri?.url
-  const commentCount = comments.length
+  // Total comment count from both sources
+  const commentCount = comments.length + disqusComments.length
 
   return (
     <>
@@ -107,10 +110,11 @@ export default function BlogPostPage({ node, comments = [] }: BlogPostPageProps)
           </div>
         )}
 
-        {node.field_issue_comment_id && (
+        {(node.field_issue_comment_id || disqusComments.length > 0) && (
           <Comments
             issueId={node.field_issue_comment_id}
             initialComments={comments}
+            disqusComments={disqusComments}
           />
         )}
 
@@ -331,6 +335,12 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
       }
     }
 
+    // Get disqus comments
+    const disqusComments = getDisqusComments(normalizedPath)
+    if (disqusComments.length > 0) {
+      console.log(`[getStaticProps] Found ${disqusComments.length} disqus comments for ${normalizedPath}`)
+    }
+
     console.log(`[getStaticProps] Successfully fetched: ${node.title}`)
 
     return {
@@ -340,6 +350,7 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({ params
           field_image: imagePath ? { ...node.field_image, uri: { ...node.field_image?.uri, url: imagePath } } : node.field_image,
         },
         comments,
+        disqusComments,
       },
     }
   } catch (error) {

@@ -5,6 +5,8 @@ import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+import { getDisqusCommentCount } from "@/lib/disqus"
+import { getNodePath } from "@/lib/utils"
 import { getIssueUrl } from "@/lib/github"
 
 const POSTS_PER_PAGE = 10
@@ -133,7 +135,7 @@ export const getStaticProps: GetStaticProps<BlogPageProps> = async ({ params }) 
     const offset = (currentPage - 1) * POSTS_PER_PAGE
     const pageNodes = allNodes.slice(offset, offset + POSTS_PER_PAGE)
 
-    // Fetch comment counts from GitHub Issues
+    // Fetch comment counts - GitHub Issues first, disqus.xml as fallback
     const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
     const nodesWithComments: NodeWithComments[] = await Promise.all(
       pageNodes.map(async (node: any) => {
@@ -142,6 +144,12 @@ export const getStaticProps: GetStaticProps<BlogPageProps> = async ({ params }) 
         // Try GitHub Issues first
         if (node.field_issue_comment_id) {
           commentCount = await fetchCommentCount(node.field_issue_comment_id, repo)
+        }
+
+        // Fall back to disqus.xml if no GitHub comments
+        if (commentCount === 0) {
+          const path = getNodePath(node)
+          commentCount = getDisqusCommentCount(path)
         }
 
         return { ...node, commentCount }
