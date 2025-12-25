@@ -10,7 +10,7 @@ import {
   normalizePath,
 } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
-import { formatDate, absoluteUrl } from "@/lib/utils"
+import { formatDate, absoluteUrl, getNodePath } from "@/lib/utils"
 import Comments from "@/components/Comments"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import Link from "next/link"
@@ -160,7 +160,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     console.log(`[getStaticPaths] Found ${nodes.length} blog posts`)
 
     const paths = nodes.map((node) => {
-      const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
+      const path = getNodePath(node)
       const slug = path.split("/").filter(Boolean)
       console.log(`[getStaticPaths] Generated path: /${slug.join("/")}`)
       return {
