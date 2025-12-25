@@ -16,7 +16,8 @@ export function absoluteUrl(input: string) {
 }
 
 export function getNodePath(node: DrupalNode): string {
-  const rawPath = node.path?.alias || `/node/${node.drupal_internal__nid}`
+  const fallbackPath = `/node/${node.drupal_internal__nid}`
+  const rawPath = node.path?.alias || fallbackPath
   let path = rawPath.trim()
 
   try {
@@ -31,6 +32,9 @@ export function getNodePath(node: DrupalNode): string {
 
   if (!path.startsWith("/")) {
     path = `/${path}`
+  }
+  if (path === "/") {
+    path = fallbackPath
   }
   // Ensure trailing slash for static export compatibility
   return path.endsWith("/") ? path : `${path}/`
