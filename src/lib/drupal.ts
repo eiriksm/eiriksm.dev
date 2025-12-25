@@ -100,13 +100,13 @@ const normalizePath = (value: string | undefined) => {
   let path = trimmed
 
   try {
-    path = new URL(trimmed).pathname
-  } catch {
-    try {
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      path = new URL(trimmed).pathname
+    } else if (trimmed.includes(".") && trimmed.includes("/")) {
       path = new URL(`https://${trimmed}`).pathname
-    } catch {
-      path = trimmed
     }
+  } catch {
+    path = trimmed
   }
 
   const ensured = path.startsWith("/") ? path : `/${path}`

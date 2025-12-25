@@ -21,13 +21,13 @@ export function getNodePath(node: DrupalNode): string {
   let path = rawPath.trim()
 
   try {
-    path = new URL(path).pathname
-  } catch {
-    try {
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      path = new URL(path).pathname
+    } else if (path.includes(".") && path.includes("/")) {
       path = new URL(`https://${path}`).pathname
-    } catch {
-      path = rawPath
     }
+  } catch {
+    path = rawPath
   }
 
   if (!path.startsWith("/")) {
