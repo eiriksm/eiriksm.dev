@@ -94,7 +94,22 @@ export async function getAllResources<TResource>(
 
 const normalizePath = (value: string | undefined) => {
   if (!value) return ""
-  const ensured = value.startsWith("/") ? value : `/${value}`
+  const trimmed = value.trim()
+  if (!trimmed) return ""
+
+  let path = trimmed
+
+  try {
+    path = new URL(trimmed).pathname
+  } catch {
+    try {
+      path = new URL(`https://${trimmed}`).pathname
+    } catch {
+      path = trimmed
+    }
+  }
+
+  const ensured = path.startsWith("/") ? path : `/${path}`
   return ensured.endsWith("/") ? ensured.slice(0, -1) : ensured
 }
 
