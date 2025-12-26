@@ -56,14 +56,8 @@ function parseDisqusData(): DisqusData {
         const threadId = thread["@_dsq:id"]
         const link = thread.link
         if (threadId && link) {
-          // Extract path from URL
-          try {
-            const url = new URL(link)
-            threadLinks.set(threadId, url.pathname)
-          } catch {
-            // If not a valid URL, use as-is
-            threadLinks.set(threadId, link)
-          }
+          const path = extractPathFromLink(link)
+          threadLinks.set(threadId, normalizePath(path))
         }
       }
     }
@@ -131,8 +125,24 @@ function parseDisqusData(): DisqusData {
  * Normalize path for matching
  */
 function normalizePath(path: string): string {
-  // Remove trailing slash for consistent matching
-  return path.endsWith("/") ? path.slice(0, -1) : path
+  const trimmed = path.trim()
+  if (!trimmed) {
+    return ""
+  }
+  const ensured = trimmed.startsWith("/") ? trimmed : `/${trimmed}`
+  return ensured.endsWith("/") ? ensured.slice(0, -1) : ensured
+}
+
+function extractPathFromLink(link: string): string {
+  try {
+    return new URL(link).pathname
+  } catch {
+    try {
+      return new URL(`https://${link}`).pathname
+    } catch {
+      return link
+    }
+  }
 }
 
 /**
