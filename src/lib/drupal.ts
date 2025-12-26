@@ -173,14 +173,16 @@ export async function ensurePathUuidMap(
   return map
 }
 
-export function addNodesToPathUuidMap(nodes: DrupalNode[]) {
+export async function addNodesToPathUuidMap(nodes: DrupalNode[]) {
   const freshMap = buildPathUuidMap(nodes)
 
   // Merge with any existing cached map to avoid losing entries across calls.
   const mergedMap = { ...(cachedPathUuidMap || {}), ...freshMap }
-  persistPathUuidMap(mergedMap).catch((error) => {
+  try {
+    await persistPathUuidMap(mergedMap)
+  } catch (error) {
     console.warn("[drupal] Failed to persist path UUID map:", error)
-  })
+  }
 }
 
 export { normalizePath }
