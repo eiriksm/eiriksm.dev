@@ -15,6 +15,8 @@ interface DisqusData {
   comments: Map<string, DisqusComment[]>
 }
 
+const PATH_UUID_MAP_FILE = join(process.cwd(), ".cache", "path-uuid-map.json")
+
 let disqusCache: DisqusData | null = null
 
 /**
@@ -28,6 +30,8 @@ function parseDisqusData(): DisqusData {
   const counts = new Map<string, number>()
   const comments = new Map<string, DisqusComment[]>()
   const disqusPath = join(process.cwd(), "disqus.xml")
+  const pathUuidMap = loadPathUuidMapFromDisk()
+  const uuidToPathMap = buildUuidToPathMap(pathUuidMap)
 
   if (!existsSync(disqusPath)) {
     disqusCache = { counts, comments }
@@ -58,6 +62,14 @@ function parseDisqusData(): DisqusData {
         if (threadId && link) {
           const path = extractPathFromLink(link)
           threadLinks.set(threadId, normalizePath(path))
+          continue
+        }
+
+        if (threadId) {
+          const uuidPath = uuidToPathMap.get(threadId)
+          if (uuidPath) {
+            threadLinks.set(threadId, normalizePath(uuidPath))
+          }
         }
       }
     }
@@ -78,7 +90,7 @@ function parseDisqusData(): DisqusData {
 
         const threadRef = post.thread?.["@_dsq:id"]
         if (threadRef) {
-          const path = threadLinks.get(threadRef)
+          const path = threadLinks.get(threadRef) || uuidToPathMap.get(threadRef)
           if (path) {
             // Update count
             const currentCount = counts.get(path) || 0
@@ -119,6 +131,61 @@ function parseDisqusData(): DisqusData {
 
   disqusCache = { counts, comments }
   return disqusCache
+}
+
+type PathUuidMap = Record<string, string>
+
+function loadPathUuidMapFromDisk(): PathUuidMap {
+  if (!existsSync(PATH_UUID_MAP_FILE)) {
+    return {}
+  }
+
+  try {
+    const data = readFileSync(PATH_UUID_MAP_FILE, "utf8")
+    const map = (JSON.parse(data) as PathUuidMap) || {}
+    return map
+  } catch (error) {
+    console.warn("[disqus] Failed to read path UUID map:", error)
+    return {}
+  }
+}
+
+function buildUuidToPathMap(pathUuidMap: PathUuidMap): Map<string, string> {
+  const uuidMap = new Map<string, string>()
+
+  for (const [path, uuid] of Object.entries(pathUuidMap)) {
+    if (!uuid) {
+      continue
+    }
+
+    const normalizedPath = normalizePath(path)
+    if (!normalizedPath) {
+      continue
+    }
+
+    const existing = uuidMap.get(uuid)
+    if (!existing) {
+      uuidMap.set(uuid, normalizedPath)
+      continue
+    }
+
+    const existingIsNodePath = existing.startsWith("/node/")
+    const nextIsNodePath = normalizedPath.startsWith("/node/")
+    if (existingIsNodePath && !nextIsNodePath) {
+      uuidMap.set(uuid, normalizedPath)
+      continue
+    }
+
+    if (!existingIsNodePath && nextIsNodePath) {
+      continue
+    }
+
+    if (normalizedPath.length < existing.length) {
+      uuidMap.set(uuid, normalizedPath)
+    }
+  }
+
+  return uuidMap
 }
 
 /**
