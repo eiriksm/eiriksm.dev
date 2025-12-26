@@ -59,14 +59,17 @@ function parseDisqusData(): DisqusData {
       for (const thread of threadArray) {
         const threadId = thread["@_dsq:id"]
         const link = thread.link
+        const threadUuid = extractUuidFromThread(thread)
         if (threadId && link) {
           const path = extractPathFromLink(link)
-          threadLinks.set(threadId, normalizePath(path))
-          continue
+          if (path) {
+            threadLinks.set(threadId, normalizePath(path))
+            continue
+          }
         }
 
         if (threadId) {
-          const uuidPath = uuidToPathMap.get(threadId)
+          const uuidPath = threadUuid ? uuidToPathMap.get(threadUuid) : undefined
           if (uuidPath) {
             threadLinks.set(threadId, normalizePath(uuidPath))
           }
@@ -90,7 +93,7 @@ function parseDisqusData(): DisqusData {
 
         const threadRef = post.thread?.["@_dsq:id"]
         if (threadRef) {
-          const path = threadLinks.get(threadRef) || uuidToPathMap.get(threadRef)
+          const path = threadLinks.get(threadRef)
           if (path) {
             // Update count
             const currentCount = counts.get(path) || 0
@@ -188,6 +191,20 @@ function buildUuidToPathMap(pathUuidMap: PathUuidMap): Map<string, string> {
   return uuidMap
 }
 
+const UUID_REGEX =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}/
+
+function extractUuidFromThread(thread: any): string | undefined {
+  const explicitId = typeof thread?.id === "string" ? thread.id.trim() : ""
+  if (explicitId && UUID_REGEX.test(explicitId)) {
+    return explicitId
+  }
+
+  const link = typeof thread?.link === "string" ? thread.link : ""
+  const match = link.match(UUID_REGEX)
+  return match?.[0]
+}
+
 /**
  * Normalize path for matching
  */
@@ -207,7 +224,7 @@ function extractPathFromLink(link: string): string {
     try {
       return new URL(`https://${link}`).pathname
     } catch {
-      return link
+      return ""
     }
   }
 }
