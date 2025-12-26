@@ -170,7 +170,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
     console.log(`[getStaticPaths] Total paths generated: ${paths.length}`)
 
-    addNodesToPathUuidMap(nodes)
+    await addNodesToPathUuidMap(nodes)
 
     return {
       paths,

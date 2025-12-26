@@ -15,6 +15,8 @@ interface DisqusData {
   comments: Map<string, DisqusComment[]>
 }
 
+const PATH_UUID_MAP_FILE = join(process.cwd(), ".cache", "path-uuid-map.json")
+
 let disqusCache: DisqusData | null = null
 
 /**
@@ -28,6 +30,8 @@ function parseDisqusData(): DisqusData {
   const counts = new Map<string, number>()
   const comments = new Map<string, DisqusComment[]>()
   const disqusPath = join(process.cwd(), "disqus.xml")
+  const pathUuidMap = loadPathUuidMapFromDisk()
+  const uuidToPathMap = buildUuidToPathMap(pathUuidMap)
 
   if (!existsSync(disqusPath)) {
     disqusCache = { counts, comments }
@@ -55,9 +59,20 @@ function parseDisqusData(): DisqusData {
       for (const thread of threadArray) {
         const threadId = thread["@_dsq:id"]
         const link = thread.link
+        const threadUuid = extractUuidFromThread(thread)
         if (threadId && link) {
           const path = extractPathFromLink(link)
-          threadLinks.set(threadId, normalizePath(path))
+          if (path) {
+            threadLinks.set(threadId, normalizePath(path))
+            continue
+          }
+        }
+
+        if (threadId) {
+          const uuidPath = threadUuid ? uuidToPathMap.get(threadUuid) : undefined
+          if (uuidPath) {
+            threadLinks.set(threadId, normalizePath(uuidPath))
+          }
         }
       }
     }
@@ -121,6 +136,75 @@ function parseDisqusData(): DisqusData {
   return disqusCache
 }
 
+type PathUuidMap = Record<string, string>
+
+function loadPathUuidMapFromDisk(): PathUuidMap {
+  if (!existsSync(PATH_UUID_MAP_FILE)) {
+    return {}
+  }
+
+  try {
+    const data = readFileSync(PATH_UUID_MAP_FILE, "utf8")
+    const map = (JSON.parse(data) as PathUuidMap) || {}
+    return map
+  } catch (error) {
+    console.warn("[disqus] Failed to read path UUID map:", error)
+    return {}
+  }
+}
+
+function buildUuidToPathMap(pathUuidMap: PathUuidMap): Map<string, string> {
+  const uuidMap = new Map<string, string>()
+
+  for (const [path, uuid] of Object.entries(pathUuidMap)) {
+    if (!uuid) {
+      continue
+    }
+
+    const normalizedPath = normalizePath(path)
+    if (!normalizedPath) {
+      continue
+    }
+
+    const existing = uuidMap.get(uuid)
+    if (!existing) {
+      uuidMap.set(uuid, normalizedPath)
+      continue
+    }
+
+    const existingIsNodePath = existing.startsWith("/node/")
+    const nextIsNodePath = normalizedPath.startsWith("/node/")
+    if (existingIsNodePath && !nextIsNodePath) {
+      uuidMap.set(uuid, normalizedPath)
+      continue
+    }
+
+    if (!existingIsNodePath && nextIsNodePath) {
+      continue
+    }
+
+    if (normalizedPath.length < existing.length) {
+      uuidMap.set(uuid, normalizedPath)
+    }
+  }
+
+  return uuidMap
+}
+
+const UUID_REGEX =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}/
+
+function extractUuidFromThread(thread: any): string | undefined {
+  const explicitId = typeof thread?.id === "string" ? thread.id.trim() : ""
+  if (explicitId && UUID_REGEX.test(explicitId)) {
+    return explicitId
+  }
+
+  const link = typeof thread?.link === "string" ? thread.link : ""
+  const match = link.match(UUID_REGEX)
+  return match?.[0]
+}
+
 /**
  * Normalize path for matching
  */
@@ -140,7 +224,7 @@ function extractPathFromLink(link: string): string {
     try {
       return new URL(`https://${link}`).pathname
     } catch {
-      return link
+      return ""
     }
   }
 }
