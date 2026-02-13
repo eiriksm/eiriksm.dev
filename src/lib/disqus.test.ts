@@ -82,7 +82,7 @@ async function setupMocks(config: {
 
 beforeEach(() => {
   vi.resetModules()
-  vi.restoreAllMocks()
+  vi.clearAllMocks()
 
   vi.mock('fs', () => ({
     readFileSync: vi.fn(),
