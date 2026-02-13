@@ -1,15 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock fs before importing the module
 vi.mock('fs', () => ({
   readFileSync: vi.fn(),
   existsSync: vi.fn(),
 }))
-
-import { readFileSync, existsSync } from 'fs'
-
-const mockedExistsSync = vi.mocked(existsSync)
-const mockedReadFileSync = vi.mocked(readFileSync)
 
 function makeDisqusXml({
   threads,
@@ -57,17 +51,39 @@ function makeDisqusXml({
 </disqus>`
 }
 
-// Re-import the module fresh before each test to reset the module-level cache
-async function loadDisqusModule() {
+async function setupMocks(config: {
+  disqusXml?: string | false
+  pathUuidMap?: string | false | Error
+} = {}) {
+  const { disqusXml = false, pathUuidMap = false } = config
+
+  const { existsSync, readFileSync } = await import('fs')
+  const mockExists = vi.mocked(existsSync)
+  const mockRead = vi.mocked(readFileSync)
+
+  mockExists.mockImplementation((p) => {
+    if (typeof p === 'string' && p.endsWith('disqus.xml')) return disqusXml !== false
+    if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) return pathUuidMap !== false
+    return false
+  })
+
+  mockRead.mockImplementation((p) => {
+    if (typeof p === 'string' && p.endsWith('disqus.xml') && typeof disqusXml === 'string') return disqusXml
+    if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) {
+      if (pathUuidMap instanceof Error) throw pathUuidMap
+      if (typeof pathUuidMap === 'string') return pathUuidMap
+    }
+    return ''
+  })
+
   const mod = await import('./disqus')
-  return mod
+  return { ...mod, mockExists, mockRead }
 }
 
 beforeEach(() => {
   vi.resetModules()
   vi.restoreAllMocks()
 
-  // Re-apply mocks after resetModules
   vi.mock('fs', () => ({
     readFileSync: vi.fn(),
     existsSync: vi.fn(),
@@ -76,29 +92,12 @@ beforeEach(() => {
 
 describe('getDisqusCommentCount', () => {
   it('returns 0 when disqus.xml does not exist', async () => {
-    const { existsSync: mockExists } = await import('fs')
-    vi.mocked(mockExists).mockReturnValue(false)
-
-    const { getDisqusCommentCount } = await loadDisqusModule()
+    const { getDisqusCommentCount } = await setupMocks()
     expect(getDisqusCommentCount('/some-article')).toBe(0)
   })
 
   it('returns 0 when XML has no disqus root element', async () => {
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockReturnValue(false)
-    vi.mocked(mockRead).mockReturnValue('<root></root>')
-
-    // existsSync: false for path-uuid-map, false for disqus.xml
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return '<root></root>'
-      return ''
-    })
-
-    const { getDisqusCommentCount } = await loadDisqusModule()
+    const { getDisqusCommentCount } = await setupMocks({ disqusXml: '<root></root>' })
     expect(getDisqusCommentCount('/some-article')).toBe(0)
   })
 
@@ -111,17 +110,7 @@ describe('getDisqusCommentCount', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusCommentCount } = await loadDisqusModule()
+    const { getDisqusCommentCount } = await setupMocks({ disqusXml: xml })
     expect(getDisqusCommentCount('/my-article')).toBe(2)
   })
 
@@ -131,27 +120,14 @@ describe('getDisqusCommentCount', () => {
       posts: [{ id: 'p1', threadRef: 't1', message: 'Hello' }],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusCommentCount } = await loadDisqusModule()
+    const { getDisqusCommentCount } = await setupMocks({ disqusXml: xml })
     expect(getDisqusCommentCount('/other-article')).toBe(0)
   })
 })
 
 describe('getDisqusComments', () => {
   it('returns empty array when disqus.xml does not exist', async () => {
-    const { existsSync: mockExists } = await import('fs')
-    vi.mocked(mockExists).mockReturnValue(false)
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks()
     expect(getDisqusComments('/some-article')).toEqual([])
   })
 
@@ -170,17 +146,7 @@ describe('getDisqusComments', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     const comments = getDisqusComments('/my-post')
 
     expect(comments).toHaveLength(1)
@@ -202,17 +168,7 @@ describe('getDisqusComments', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     const comments = getDisqusComments('/article')
 
     expect(comments).toHaveLength(1)
@@ -228,17 +184,7 @@ describe('getDisqusComments', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     const comments = getDisqusComments('/article')
 
     expect(comments).toHaveLength(1)
@@ -259,17 +205,7 @@ describe('getDisqusComments', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     const comments = getDisqusComments('/post')
 
     expect(comments).toHaveLength(1)
@@ -287,17 +223,7 @@ describe('getDisqusComments', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     const comments = getDisqusComments('/sorted')
 
     expect(comments).toHaveLength(3)
@@ -319,17 +245,7 @@ describe('getDisqusComments', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments, getDisqusCommentCount } = await loadDisqusModule()
+    const { getDisqusComments, getDisqusCommentCount } = await setupMocks({ disqusXml: xml })
 
     expect(getDisqusComments('/post-one')).toHaveLength(2)
     expect(getDisqusComments('/post-two')).toHaveLength(1)
@@ -343,25 +259,13 @@ describe('getDisqusComments', () => {
       posts: [{ id: 'p1', threadRef: 't1', message: 'Hello' }],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
-    // Path gets normalized (trailing slash removed), so lookup without trailing slash should work
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     expect(getDisqusComments('/my-article')).toHaveLength(1)
   })
 
   it('resolves thread via UUID from path-uuid-map when link has no valid path', async () => {
     const uuid = 'a1b2c3d4-e5f6-1234-89ab-abcdef012345'
 
-    // Thread has no link, but has a UUID in its id
     const xml = `<?xml version="1.0" encoding="utf-8"?>
 <disqus xmlns:dsq="http://disqus.com/disqus-internals">
   <thread dsq:id="t1"><id>${uuid}</id></thread>
@@ -375,21 +279,10 @@ describe('getDisqusComments', () => {
   </post>
 </disqus>`
 
-    const pathUuidMap = JSON.stringify({ '/uuid-article': uuid })
-
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) return true
-      return false
+    const { getDisqusComments } = await setupMocks({
+      disqusXml: xml,
+      pathUuidMap: JSON.stringify({ '/uuid-article': uuid }),
     })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) return pathUuidMap
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
     const comments = getDisqusComments('/uuid-article')
 
     expect(comments).toHaveLength(1)
@@ -413,71 +306,35 @@ describe('getDisqusComments', () => {
   </post>
 </disqus>`
 
-    // Both /node/42 and /nice-slug map to same UUID; prefer /nice-slug
-    const pathUuidMap = JSON.stringify({
-      '/node/42': uuid,
-      '/nice-slug': uuid,
+    const { getDisqusComments } = await setupMocks({
+      disqusXml: xml,
+      pathUuidMap: JSON.stringify({ '/node/42': uuid, '/nice-slug': uuid }),
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) return pathUuidMap
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
-
-    // Should be found under /nice-slug, not /node/42
     expect(getDisqusComments('/nice-slug')).toHaveLength(1)
     expect(getDisqusComments('/node/42')).toEqual([])
   })
 
   it('handles malformed XML gracefully', async () => {
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return '<<<not valid xml'
-      return ''
+    const { getDisqusComments, getDisqusCommentCount } = await setupMocks({
+      disqusXml: '<<<not valid xml',
     })
 
-    const { getDisqusComments, getDisqusCommentCount } = await loadDisqusModule()
-    // Should not throw, just return empty
     expect(getDisqusComments('/any')).toEqual([])
     expect(getDisqusCommentCount('/any')).toBe(0)
   })
 
   it('handles a single thread (non-array) in XML', async () => {
-    // When there is exactly one thread, fast-xml-parser may return it as an object, not an array
     const xml = makeDisqusXml({
       threads: [{ id: 't1', link: 'https://eiriksm.dev/solo' }],
       posts: [{ id: 'p1', threadRef: 't1', message: 'Only comment' }],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     expect(getDisqusComments('/solo')).toHaveLength(1)
   })
 
   it('uses username as fallback when author name is missing for non-anonymous user', async () => {
-    // Build XML manually to omit author name
     const xml = `<?xml version="1.0" encoding="utf-8"?>
 <disqus xmlns:dsq="http://disqus.com/disqus-internals">
   <thread dsq:id="t1"><link>https://eiriksm.dev/fallback-test</link></thread>
@@ -491,17 +348,7 @@ describe('getDisqusComments', () => {
   </post>
 </disqus>`
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     const comments = getDisqusComments('/fallback-test')
 
     expect(comments).toHaveLength(1)
@@ -524,20 +371,7 @@ describe('getDisqusComments', () => {
   </post>
 </disqus>`
 
-    // Thread has a link with a path, so it will be matched by extractPathFromLink first.
-    // But also set up UUID map to verify UUID extraction from link works.
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
-    // The link has a valid path, so it's resolved by extractPathFromLink
+    const { getDisqusComments } = await setupMocks({ disqusXml: xml })
     const comments = getDisqusComments(`/node/${uuid}`)
     expect(comments).toHaveLength(1)
     expect(comments[0].body).toBe('UUID in link')
@@ -548,17 +382,7 @@ describe('getDisqusComments', () => {
 <disqus xmlns:dsq="http://disqus.com/disqus-internals">
 </disqus>`
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusComments, getDisqusCommentCount } = await loadDisqusModule()
+    const { getDisqusComments, getDisqusCommentCount } = await setupMocks({ disqusXml: xml })
     expect(getDisqusComments('/anything')).toEqual([])
     expect(getDisqusCommentCount('/anything')).toBe(0)
   })
@@ -572,17 +396,7 @@ describe('getDisqusComments', () => {
       ],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
-
-    const { getDisqusCommentCount } = await loadDisqusModule()
+    const { getDisqusCommentCount } = await setupMocks({ disqusXml: xml })
     expect(getDisqusCommentCount('/known')).toBe(1)
   })
 
@@ -592,20 +406,10 @@ describe('getDisqusComments', () => {
       posts: [{ id: 'p1', threadRef: 't1', message: 'Works' }],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) return true
-      return false
+    const { getDisqusComments } = await setupMocks({
+      disqusXml: xml,
+      pathUuidMap: new Error('read error'),
     })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      if (typeof p === 'string' && p.endsWith('path-uuid-map.json')) throw new Error('read error')
-      return ''
-    })
-
-    const { getDisqusComments } = await loadDisqusModule()
-    // Should still work for link-based resolution even if UUID map fails
     expect(getDisqusComments('/ok')).toHaveLength(1)
   })
 
@@ -615,28 +419,19 @@ describe('getDisqusComments', () => {
       posts: [{ id: 'p1', threadRef: 't1', message: 'Cached comment' }],
     })
 
-    const { existsSync: mockExists, readFileSync: mockRead } = await import('fs')
-    vi.mocked(mockExists).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
-      return false
-    })
-    vi.mocked(mockRead).mockImplementation((p) => {
-      if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
-      return ''
-    })
+    const { getDisqusComments, getDisqusCommentCount, mockRead, mockExists } =
+      await setupMocks({ disqusXml: xml })
 
-    const { getDisqusComments, getDisqusCommentCount } = await loadDisqusModule()
-
-    // Clear accumulated calls from prior tests before counting
-    vi.mocked(mockRead).mockClear()
-    vi.mocked(mockExists).mockClear()
+    // Clear accumulated calls from module init before counting
+    mockRead.mockClear()
+    mockExists.mockClear()
 
     // Re-apply implementations after clearing
-    vi.mocked(mockExists).mockImplementation((p) => {
+    mockExists.mockImplementation((p) => {
       if (typeof p === 'string' && p.endsWith('disqus.xml')) return true
       return false
     })
-    vi.mocked(mockRead).mockImplementation((p) => {
+    mockRead.mockImplementation((p) => {
       if (typeof p === 'string' && p.endsWith('disqus.xml')) return xml
       return ''
     })
@@ -644,18 +439,17 @@ describe('getDisqusComments', () => {
     // First call triggers parsing
     expect(getDisqusComments('/cached')).toHaveLength(1)
 
-    const callsAfterFirst = vi.mocked(mockRead).mock.calls.filter(
+    const callsAfterFirst = mockRead.mock.calls.filter(
       (call) => typeof call[0] === 'string' && call[0].endsWith('disqus.xml')
     ).length
 
     // Second call should use cache (readFileSync not called again for disqus.xml)
     expect(getDisqusCommentCount('/cached')).toBe(1)
 
-    const callsAfterSecond = vi.mocked(mockRead).mock.calls.filter(
+    const callsAfterSecond = mockRead.mock.calls.filter(
       (call) => typeof call[0] === 'string' && call[0].endsWith('disqus.xml')
     ).length
 
-    // No additional reads of disqus.xml between first and second call
     expect(callsAfterSecond).toBe(callsAfterFirst)
   })
 })
