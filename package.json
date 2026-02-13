@@ -22,6 +22,7 @@
     "date-fns": "^4.1.0",
     "drupal-jsonapi-params": "^3.0.0",
     "fast-xml-parser": "^5.3.3",
+    "isomorphic-dompurify": "^3.0.0-rc.2",
     "marked": "^17.0.1",
     "next": "^16.0.10",
     "next-drupal": "^1.6.0",

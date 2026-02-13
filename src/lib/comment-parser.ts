@@ -1,5 +1,6 @@
 import { marked } from "marked"
 import * as emoji from "node-emoji"
+import DOMPurify from "isomorphic-dompurify"
 
 // Configure marked for safe rendering
 marked.setOptions({
@@ -31,6 +32,6 @@ export function parseMarkdown(text: string): string {
 export function parseCommentBody(text: string): string {
   // First parse emojis (before markdown, so :emoji: doesn't get escaped)
   const withEmojis = parseEmojis(text)
-  // Then parse markdown
-  return parseMarkdown(withEmojis)
+  // Then parse markdown and sanitize
+  return DOMPurify.sanitize(parseMarkdown(withEmojis))
 }
