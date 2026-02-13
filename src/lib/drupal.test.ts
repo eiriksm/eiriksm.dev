@@ -104,10 +104,8 @@ describe('normalizePath', () => {
     expect(normalizePath('  /my-article  ')).toBe('/my-article')
   })
 
-  it('falls back to trimmed value when URL parsing fails', async () => {
+  it('returns trimmed path unchanged when no URL parsing is needed', async () => {
     const { normalizePath } = await loadModule()
-    // A string with dots and slashes that still can't be parsed as URL
-    // The try/catch should handle gracefully
     expect(normalizePath('/just-a-path')).toBe('/just-a-path')
   })
 })
