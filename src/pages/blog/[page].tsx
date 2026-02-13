@@ -1,6 +1,6 @@
 import { GetStaticPaths, GetStaticProps } from "next"
 import Head from "next/head"
-import { drupal, getAllResources } from "@/lib/drupal"
+import { getAllResources } from "@/lib/drupal"
 import { DrupalNode } from "next-drupal"
 import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"

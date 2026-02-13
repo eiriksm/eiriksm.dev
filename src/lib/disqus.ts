@@ -121,7 +121,7 @@ function parseDisqusData(): DisqusData {
     }
 
     // Sort comments by date (oldest first)
-    for (const [path, pathComments] of comments) {
+    for (const [, pathComments] of comments) {
       pathComments.sort((a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       )
