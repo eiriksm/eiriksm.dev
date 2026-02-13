@@ -105,12 +105,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
 
       try {
         const response = await fetch(
-          getIssueCommentsUrl(issueId, repo),
-          {
-            headers: process.env.GITHUB_TOKEN
-              ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
-              : {},
-          }
+          getIssueCommentsUrl(issueId, repo)
         )
 
         if (!response.ok) {
