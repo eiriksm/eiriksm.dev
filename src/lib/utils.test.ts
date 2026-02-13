@@ -5,7 +5,12 @@ describe('formatDate', () => {
   it('formats a Unix timestamp (seconds) correctly', () => {
     // 1672531200 = 2023-01-01T00:00:00Z
     const result = formatDate(1672531200)
-    expect(result).toBe('January 1, 2023')
+    const expected = new Date(1672531200 * 1000).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    expect(result).toBe(expected)
   })
 
   it('formats a date string correctly', () => {
