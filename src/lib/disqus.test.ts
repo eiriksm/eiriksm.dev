@@ -83,11 +83,6 @@ async function setupMocks(config: {
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
-
-  vi.mock('fs', () => ({
-    readFileSync: vi.fn(),
-    existsSync: vi.fn(),
-  }))
 })
 
 describe('getDisqusCommentCount', () => {
