@@ -4,7 +4,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockGetResourceCollection = vi.fn()
 vi.mock('next-drupal', () => {
   function MockDrupalClient() {
-    // @ts-expect-error mock constructor
     this.getResourceCollection = mockGetResourceCollection
   }
   return { DrupalClient: MockDrupalClient, DrupalNode: {} }
