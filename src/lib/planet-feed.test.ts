@@ -49,9 +49,11 @@ describe('generatePlanetFeed', () => {
     await generatePlanetFeed([node])
 
     expect(mockWriteFile).toHaveBeenCalledTimes(2)
-    const paths = mockWriteFile.mock.calls.map((call) => call[0])
-    expect(paths.some((p) => String(p).includes('public/planet'))).toBe(true)
-    expect(paths.some((p) => String(p).includes('planet.xml'))).toBe(true)
+    const rawPaths = mockWriteFile.mock.calls.map((call) => call[0])
+    const normalizedPaths = rawPaths.map((p) => String(p).replace(/\\/g, '/'))
+    expect(new Set(normalizedPaths).size).toBeGreaterThanOrEqual(2)
+    expect(normalizedPaths.some((p) => p.includes('public/planet'))).toBe(true)
+    expect(normalizedPaths.some((p) => p.includes('planet.xml'))).toBe(true)
   })
 
   it('creates parent directories recursively', async () => {
