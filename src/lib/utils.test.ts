@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { formatDate, absoluteUrl, getNodePath, extractExcerpt } from './utils'
 
 describe('formatDate', () => {
@@ -31,6 +31,10 @@ describe('formatDate', () => {
 describe('absoluteUrl', () => {
   beforeEach(() => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://eiriksm.dev')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('prepends the site URL to a path', () => {
