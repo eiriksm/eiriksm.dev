@@ -6,6 +6,7 @@ import BlogPostCard from "@/components/BlogPostCard"
 import Pagination from "@/components/Pagination"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import { generatePlanetFeed } from "@/lib/planet-feed"
+import { generateSitemap } from "@/lib/sitemap"
 import { getDisqusCommentCount } from "@/lib/disqus"
 import { getNodePath } from "@/lib/utils"
 import { getIssueUrl } from "@/lib/github"
@@ -89,7 +90,11 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
       .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
 
     const totalPosts = allNodes.length
-    await generatePlanetFeed(allNodes)
+    const allTags = await getAllResources<any>("taxonomy_term--tags")
+    await Promise.all([
+      generatePlanetFeed(allNodes),
+      generateSitemap(allNodes, allTags),
+    ])
     const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
 
     // Show only first page of posts
