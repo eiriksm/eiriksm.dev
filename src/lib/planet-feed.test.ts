@@ -78,13 +78,13 @@ describe('generatePlanetFeed', () => {
     expect(feedContent).not.toContain('Regular Post')
   })
 
-  it('generates valid RSS XML structure', async () => {
+  it('generates valid RSS XML structure with content namespace', async () => {
     const { generatePlanetFeed, mockWriteFile } = await setup()
     await generatePlanetFeed([makePlanetNode({ title: 'My Planet Post' })])
 
     const feed = String(mockWriteFile.mock.calls[0][1])
     expect(feed).toContain('<?xml version="1.0" encoding="UTF-8"?>')
-    expect(feed).toContain('<rss version="2.0">')
+    expect(feed).toContain('xmlns:content="http://purl.org/rss/1.0/modules/content/"')
     expect(feed).toContain('<channel>')
     expect(feed).toContain('</channel>')
     expect(feed).toContain('</rss>')
@@ -101,35 +101,26 @@ describe('generatePlanetFeed', () => {
     expect(feed).toContain('Posts tagged &quot;planet drupal&quot; from eiriksm.dev')
   })
 
-  it('includes node title and link in items', async () => {
+  it('includes node title and link without trailing slash', async () => {
     const { generatePlanetFeed, mockWriteFile } = await setup()
     await generatePlanetFeed([makePlanetNode({ title: 'Cool Article', alias: '/cool-article' })])
 
     const feed = String(mockWriteFile.mock.calls[0][1])
     expect(feed).toContain('<title>Cool Article</title>')
-    expect(feed).toContain('/cool-article/')
+    expect(feed).toContain('<link>https://eiriksm.dev/cool-article</link>')
+    expect(feed).not.toContain('/cool-article/</link>')
   })
 
-  it('uses body summary as description when available', async () => {
+  it('uses content:encoded with full body HTML', async () => {
     const { generatePlanetFeed, mockWriteFile } = await setup()
     const node = makePlanetNode({
-      body: { value: '<p>Full body</p>', summary: 'Short summary' },
+      body: { value: '<p>Full <strong>body</strong> content</p>', summary: 'Short summary' },
     })
     await generatePlanetFeed([node])
 
     const feed = String(mockWriteFile.mock.calls[0][1])
-    expect(feed).toContain('Short summary')
-  })
-
-  it('extracts excerpt from body value when no summary', async () => {
-    const { generatePlanetFeed, mockWriteFile } = await setup()
-    const node = makePlanetNode({
-      body: { value: '<p>This is the body content</p>', summary: '' },
-    })
-    await generatePlanetFeed([node])
-
-    const feed = String(mockWriteFile.mock.calls[0][1])
-    expect(feed).toContain('This is the body content')
+    expect(feed).toContain('<content:encoded><![CDATA[<p>Full <strong>body</strong> content</p>]]></content:encoded>')
+    expect(feed).not.toContain('<description><![CDATA[')
   })
 
   it('escapes XML special characters in titles', async () => {
@@ -229,7 +220,7 @@ describe('generatePlanetFeed', () => {
     await generatePlanetFeed([makePlanetNode({ alias: '/my-post' })])
 
     const feed = String(mockWriteFile.mock.calls[0][1])
-    expect(feed).toMatch(/<guid isPermaLink="true">.*\/my-post\/.*<\/guid>/)
+    expect(feed).toMatch(/<guid isPermaLink="true">.*\/my-post<\/guid>/)
   })
 
   it('includes pubDate element', async () => {

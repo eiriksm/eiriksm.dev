@@ -1,7 +1,7 @@
 import { promises as fs } from "fs"
 import path from "path"
 import { DrupalNode } from "next-drupal"
-import { extractExcerpt, getNodePath } from "@/lib/utils"
+import { getNodePath } from "@/lib/utils"
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://eiriksm.dev").replace(/\/$/, "")
 const FEED_TITLE = "eiriksm.dev Planet Drupal feed"
@@ -30,11 +30,15 @@ function hasPlanetTag(node: DrupalNode): boolean {
   })
 }
 
+function stripTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url
+}
+
 function buildFeed(nodes: DrupalNode[]): string {
   const items = nodes.map((node) => {
-    const path = getNodePath(node)
-    const url = `${SITE_URL}${path}`
-    const description = node.body?.summary || extractExcerpt(node.body?.value || "")
+    const nodePath = getNodePath(node)
+    const url = stripTrailingSlash(`${SITE_URL}${nodePath}`)
+    const contentEncoded = node.body?.value || ""
     const pubDate = formatDate(node.created as any)
     const categories = ((node as any)?.field_tags || [])
       .map((tag: any) => tag?.name)
@@ -49,7 +53,7 @@ function buildFeed(nodes: DrupalNode[]): string {
       `    <guid isPermaLink="true">${url}</guid>`,
       `    <pubDate>${pubDate}</pubDate>`,
       categories,
-      `    <description><![CDATA[${description}]]></description>`,
+      `    <content:encoded><![CDATA[${contentEncoded}]]></content:encoded>`,
       "  </item>",
     ]
       .filter(Boolean)
@@ -58,7 +62,7 @@ function buildFeed(nodes: DrupalNode[]): string {
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<rss version="2.0">',
+    '<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">',
     "  <channel>",
     `    <title>${escapeXml(FEED_TITLE)}</title>`,
     `    <link>${SITE_URL}/</link>`,
