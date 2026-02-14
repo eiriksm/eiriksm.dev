@@ -131,7 +131,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
     <div className="comment-link-wrapper mt-6" style={{ color: 'var(--text-secondary)' }}>
       <p>Do you want to comment?</p>
       <p className="text-sm">
-        This article uses github for commenting. To comment, you can visit{" "}
+        This article uses GitHub for commenting. To comment, you can visit{" "}
         <a
           href={issueUrl}
           target="_blank"
