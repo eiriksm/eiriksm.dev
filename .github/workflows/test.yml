@@ -9,24 +9,33 @@ jobs:
     runs-on: 'ubuntu-latest'
     services:
       chromedriver:
-        image: nymediaas/chrome-headless:89
+        image: ghcr.io/nymedia/chrome-headless:with-chromedriver
         ports:
           - 8643:8643
     strategy:
       fail-fast: false
+    env:
+      NEXT_PUBLIC_DRUPAL_BASE_URL:  ${{ secrets.API_URL }}
+      ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
+      NEXT_PUBLIC_ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
+      BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
+      BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
+      API_URL: ${{ secrets.API_URL }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NEXT_PUBLIC_GITHUB_REPO: eiriksm/eiriksm.dev-comments
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "7.4"
+          php-version: "8.3"
 
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v6
         with:
-          node-version: "18"
+          node-version-file: .nvmrc
 
       - name: Update composer
         run: composer --verbose self-update
@@ -44,28 +53,35 @@ jobs:
         run: wget ${{ secrets.DISQUS_XML_URL }} -O disqus.xml
 
       - name: Install node dependencies
-        run: npm i
+        run:  |
+          npm i
+          # Also install pm2 globally.
+          npm install -g pm2
 
       - name: Build the site
         run: npm run build
-        env:
-          ISSUE_BASE: http://172.17.0.1:9000/ci_issues/
-          BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
-          BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
-          API_URL: ${{ secrets.API_URL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start the serving of the site
-        run: ./node_modules/.bin/gatsby serve -H 0.0.0.0 &
+        run: pm2 start "npx --yes serve@latest -l tcp://0.0.0.0:9000 out" --name server
 
       - name: Make sure serving has started
         run: ./vendor/bin/wait-for-listen 9000
 
-      - name: Debug
-        run: docker run --rm --entrypoint="" nymediaas/chrome-headless:89 ifconfig
-
       - name: Make a directory we need
-        run: mkdir -p public/ci_issues
+        run: mkdir -p out/ci_issues
 
       - name: Run tests
         run: composer test
+
+      - name: Stop the site serving and display pm2 logs
+        if: always()
+        run: |
+          pm2 logs server --nostream --lines 10000
+          pm2 delete server
+
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: ignore
