@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState, useMemo } from "react"
 import { formatDate } from "@/lib/utils"
 import type { DisqusComment } from "@/lib/disqus"
@@ -69,7 +67,7 @@ export default function Comments({ issueId, initialComments = [], disqusComments
   const [githubComments, setGithubComments] = useState<GitHubComment[]>(initialComments)
   const [loading, setLoading] = useState(initialComments.length === 0 && !!issueId)
   const [error, setError] = useState<string | null>(null)
-  const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
+  const repo = (typeof import.meta !== "undefined" ? (import.meta as any).env?.PUBLIC_GITHUB_REPO : undefined) || "eiriksm/eiriksm.dev-comments"
   const issueUrl = issueId ? `https://github.com/${repo}/issues/${issueId}` : null
 
   // Merge and sort all comments by date

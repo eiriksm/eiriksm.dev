@@ -1,0 +1,98 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro"
+import BlogPostCard from "@/components/BlogPostCard.astro"
+import {
+  ensureTagUuidMap,
+  getAllResources,
+  getResource,
+} from "@/lib/drupal"
+import type { DrupalNode } from "@/types/drupal"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+
+export async function getStaticPaths() {
+  try {
+    console.log('[getStaticPaths] Fetching all tags...')
+
+    const terms = await getAllResources<any>("taxonomy_term--tags")
+
+    await ensureTagUuidMap(terms)
+
+    const paths = terms.map((term: any) => ({
+      params: {
+        tid: term.drupal_internal__tid?.toString() || term.id,
+      },
+    }))
+
+    console.log(`[getStaticPaths] Generated ${paths.length} tag paths`)
+
+    return paths
+  } catch (error) {
+    console.error('[getStaticPaths] Failed to generate tag paths:', error)
+    return []
+  }
+}
+
+const { tid } = Astro.params
+
+let term: any = null
+let nodes: DrupalNode[] = []
+
+try {
+  console.log(`[tag/${tid}] Fetching tag ${tid}...`)
+
+  const tagUuidMap = await ensureTagUuidMap()
+  const tagId = tagUuidMap[tid!] || tid!
+
+  term = await getResource(
+    "taxonomy_term--tags",
+    tagId
+  )
+
+  if (!term) {
+    return Astro.redirect("/404/")
+  }
+
+  const apiParams = new DrupalJsonApiParams()
+  apiParams.addSort("created", "DESC")
+  apiParams.addInclude(["field_tags"])
+
+  const allNodes = await getAllResources<DrupalNode>(
+    "node--article",
+    apiParams
+  )
+
+  nodes = allNodes.filter((node: any) => {
+    return node.field_tags?.some((tag: any) => tag.drupal_internal__tid === parseInt(tid!))
+  })
+
+  console.log(`[tag/${tid}] Tag "${term.name}": ${nodes.length} posts`)
+} catch (error) {
+  console.error(`[tag/${tid}] Failed to fetch tag ${tid}:`, error)
+  return Astro.redirect("/404/")
+}
+---
+
+<BaseLayout title={`Posts tagged "${term.name}" | eiriksm.dev`} description={`All posts tagged with ${term.name}`}>
+  <div class="max-w-4xl mx-auto">
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold" style="color: var(--text-primary);">
+        Posts tagged &quot;{term.name}&quot;
+      </h1>
+      <p class="mt-2" style="color: var(--text-muted);">
+        {nodes.length} {nodes.length === 1 ? "post" : "posts"} found
+      </p>
+    </header>
+
+    <div class="term-list">
+      {nodes.map((node) => (
+        <BlogPostCard node={node} />
+      ))}
+    </div>
+
+    {nodes.length === 0 && (
+      <div class="text-center py-12">
+        <p class="text-lg" style="color: var(--text-muted);">No posts found with this tag.</p>
+      </div>
+    )}
+  </div>
+</BaseLayout>

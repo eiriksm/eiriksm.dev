@@ -1,0 +1,20 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro"
+---
+
+<BaseLayout title="404 - Page Not Found | eiriksm.dev" description="Page not found">
+  <div class="max-w-4xl mx-auto text-center py-16">
+    <h1 class="text-6xl font-bold mb-4" style="color: var(--text-primary);">404</h1>
+    <h2 class="text-3xl font-semibold mb-6" style="color: var(--text-secondary);">Page Not Found</h2>
+    <p class="mb-8" style="color: var(--text-muted);">
+      Sorry, the page you're looking for doesn't exist or has been moved.
+    </p>
+    <a
+      href="/"
+      class="inline-block text-white px-6 py-3 rounded-lg transition-colors"
+      style="background-color: var(--accent-color);"
+    >
+      Go Back Home
+    </a>
+  </div>
+</BaseLayout>

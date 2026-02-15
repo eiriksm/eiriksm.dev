@@ -24,7 +24,7 @@ jobs:
 
       - uses: ./deploy/
         env:
-          NEXT_PUBLIC_DRUPAL_BASE_URL: ${{ secrets.API_URL }}
+          PUBLIC_DRUPAL_BASE_URL: ${{ secrets.API_URL }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}

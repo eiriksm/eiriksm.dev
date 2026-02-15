@@ -1,6 +1,6 @@
 import { promises as fs } from "fs"
 import path from "path"
-import { DrupalClient, DrupalNode } from "next-drupal"
+import type { DrupalNode } from "@/types/drupal"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 
 const DEFAULT_PAGE_SIZE = 50
@@ -12,29 +12,102 @@ type TagUuidMap = Record<string, string>
 let cachedPathUuidMap: PathUuidMap | null = null
 let cachedTagUuidMap: TagUuidMap | null = null
 
-const drupalConfig: any = {}
+const DRUPAL_BASE_URL = (import.meta.env.PUBLIC_DRUPAL_BASE_URL || process.env.PUBLIC_DRUPAL_BASE_URL || "https://example.com").replace(/\/$/, "")
 
-// Only add auth if credentials are provided
-if (process.env.BASIC_AUTH_USERNAME && process.env.BASIC_AUTH_PASSWORD) {
-  drupalConfig.auth = {
-    username: process.env.BASIC_AUTH_USERNAME,
-    password: process.env.BASIC_AUTH_PASSWORD,
+function getAuthHeaders(): Record<string, string> {
+  const username = process.env.BASIC_AUTH_USERNAME
+  const password = process.env.BASIC_AUTH_PASSWORD
+  if (username && password) {
+    const encoded = Buffer.from(`${username}:${password}`).toString("base64")
+    return { Authorization: `Basic ${encoded}` }
   }
+  return {}
 }
 
-// Add preview secret if available
-if (process.env.DRUPAL_PREVIEW_SECRET) {
-  drupalConfig.previewSecret = process.env.DRUPAL_PREVIEW_SECRET
+/**
+ * Deserialize a single JSON:API resource object, flattening attributes
+ * and resolving included relationships.
+ */
+function deserializeResource(resource: any, included?: any[]): any {
+  if (!resource) return resource
+
+  const result: any = {
+    id: resource.id,
+    type: resource.type,
+    ...resource.attributes,
+  }
+
+  if (resource.relationships && included) {
+    const includedMap = new Map<string, any>()
+    for (const item of included) {
+      includedMap.set(`${item.type}:${item.id}`, item)
+    }
+
+    for (const [key, rel] of Object.entries(resource.relationships as Record<string, any>)) {
+      const relData = rel?.data
+      if (Array.isArray(relData)) {
+        result[key] = relData.map((ref: any) => {
+          const found = includedMap.get(`${ref.type}:${ref.id}`)
+          return found ? deserializeResource(found) : { id: ref.id, type: ref.type }
+        })
+      } else if (relData) {
+        const found = includedMap.get(`${relData.type}:${relData.id}`)
+        result[key] = found ? deserializeResource(found) : { id: relData.id, type: relData.type }
+      }
+    }
+  } else if (resource.relationships) {
+    for (const [key, rel] of Object.entries(resource.relationships as Record<string, any>)) {
+      const relData = rel?.data
+      if (Array.isArray(relData)) {
+        result[key] = relData.map((ref: any) => ({ id: ref.id, type: ref.type }))
+      } else if (relData) {
+        result[key] = { id: relData.id, type: relData.type }
+      }
+    }
+  }
+
+  return result
 }
 
-export const drupal = new DrupalClient(
-  process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "https://example.com",
-  drupalConfig
-)
+async function fetchJsonApi<T>(url: string): Promise<T[]> {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.api+json",
+      ...getAuthHeaders(),
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`JSON:API request failed: ${response.status} ${response.statusText} for ${url}`)
+  }
+
+  const json = await response.json()
+  const data = json.data || []
+  const included = json.included || []
+
+  return data.map((item: any) => deserializeResource(item, included))
+}
 
 /**
  * Fetches all resources for a given resource type by paging through results.
  */
+/**
+ * Flatten nested query objects into bracket-notation keys for JSON:API.
+ * e.g. { filter: { status: "1" } } → [["filter[status]", "1"]]
+ */
+function flattenParams(obj: Record<string, any>, prefix = ""): [string, string][] {
+  const entries: [string, string][] = []
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}[${key}]` : key
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      entries.push(...flattenParams(value, fullKey))
+    } else {
+      entries.push([fullKey, String(value)])
+    }
+  }
+  return entries
+}
+
 export async function getAllResources<TResource>(
   resourceType: string,
   paramsBuilder?: DrupalJsonApiParams,
@@ -70,12 +143,10 @@ export async function getAllResources<TResource>(
       "page[offset]": offset,
     }
 
-    const resources = await drupal.getResourceCollection<TResource[]>(
-      resourceType,
-      {
-        params,
-      }
-    )
+    const queryString = new URLSearchParams(flattenParams(params)).toString()
+
+    const url = `${DRUPAL_BASE_URL}/jsonapi/${resourceType.replace("--", "/")}?${queryString}`
+    const resources = await fetchJsonApi<TResource>(url)
 
     if (!resources.length) {
       break
@@ -90,6 +161,36 @@ export async function getAllResources<TResource>(
   }
 
   return allResources
+}
+
+/**
+ * Fetch a single resource by type and UUID.
+ */
+export async function getResource<TResource>(
+  resourceType: string,
+  uuid: string,
+  params?: Record<string, string>
+): Promise<TResource | null> {
+  const queryString = params
+    ? new URLSearchParams(params).toString()
+    : ""
+  const url = `${DRUPAL_BASE_URL}/jsonapi/${resourceType.replace("--", "/")}/${uuid}${queryString ? `?${queryString}` : ""}`
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.api+json",
+      ...getAuthHeaders(),
+    },
+  })
+
+  if (!response.ok) {
+    if (response.status === 404) return null
+    throw new Error(`JSON:API request failed: ${response.status} for ${url}`)
+  }
+
+  const json = await response.json()
+  if (!json.data) return null
+  return deserializeResource(json.data, json.included || [])
 }
 
 const normalizePath = (value: string | undefined) => {

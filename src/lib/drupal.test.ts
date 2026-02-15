@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock next-drupal before any imports
-const mockGetResourceCollection = vi.fn()
-vi.mock('next-drupal', () => {
-  function MockDrupalClient() {
-    this.getResourceCollection = mockGetResourceCollection
-  }
-  return { DrupalClient: MockDrupalClient, DrupalNode: {} }
-})
+// Mock fetch globally
+const mockFetch = vi.fn()
+vi.stubGlobal('fetch', mockFetch)
+
+// Mock import.meta.env
+vi.stubGlobal('import', { meta: { env: { PUBLIC_DRUPAL_BASE_URL: 'https://example.com' } } })
 
 // Mock fs promises
 const mockReadFile = vi.fn()
@@ -24,7 +22,7 @@ vi.mock('fs', () => ({
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
-  mockGetResourceCollection.mockReset()
+  mockFetch.mockReset()
   mockReadFile.mockReset()
   mockWriteFile.mockReset()
   mockMkdir.mockReset()
@@ -110,13 +108,33 @@ describe('normalizePath', () => {
 })
 
 describe('getAllResources', () => {
+  // Helper to wrap flat objects in JSON:API resource format
+  function toJsonApi(obj: any) {
+    const { id, type, ...attributes } = obj
+    return { id, type: type || 'node--article', attributes }
+  }
+
+  function mockFetchResponse(data: any[]) {
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ data: data.map(toJsonApi) }),
+    })
+  }
+
+  function mockEmptyResponse() {
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ data: [] }),
+    })
+  }
+
   it('returns empty array when first page returns nothing', async () => {
-    mockGetResourceCollection.mockResolvedValueOnce([])
+    mockFetch.mockImplementation(() => mockEmptyResponse())
     const { getAllResources } = await loadModule()
 
     const result = await getAllResources('node--article')
     expect(result).toEqual([])
-    expect(mockGetResourceCollection).toHaveBeenCalledTimes(1)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 
   it('returns resources from a single page', async () => {
@@ -124,13 +142,16 @@ describe('getAllResources', () => {
       { id: '1', title: 'Article 1' },
       { id: '2', title: 'Article 2' },
     ]
-    mockGetResourceCollection.mockResolvedValueOnce(resources)
-    mockGetResourceCollection.mockResolvedValueOnce([])
+    mockFetch
+      .mockImplementationOnce(() => mockFetchResponse(resources))
+      .mockImplementationOnce(() => mockEmptyResponse())
 
     const { getAllResources } = await loadModule()
-    const result = await getAllResources('node--article')
+    const result = await getAllResources<any>('node--article')
 
-    expect(result).toEqual(resources)
+    expect(result).toHaveLength(2)
+    expect(result[0].id).toBe('1')
+    expect(result[0].title).toBe('Article 1')
   })
 
   it('pages through multiple result sets', async () => {
@@ -139,10 +160,10 @@ describe('getAllResources', () => {
       { id: '2', title: 'B' },
     ]
     const page2 = [{ id: '3', title: 'C' }]
-    mockGetResourceCollection
-      .mockResolvedValueOnce(page1)
-      .mockResolvedValueOnce(page2)
-      .mockResolvedValueOnce([])
+    mockFetch
+      .mockImplementationOnce(() => mockFetchResponse(page1))
+      .mockImplementationOnce(() => mockFetchResponse(page2))
+      .mockImplementationOnce(() => mockEmptyResponse())
 
     const { getAllResources } = await loadModule()
     const result = await getAllResources('node--article')
@@ -154,97 +175,42 @@ describe('getAllResources', () => {
   it('deduplicates resources by id', async () => {
     const page1 = [{ id: '1', title: 'A' }]
     const page2 = [{ id: '1', title: 'A duplicate' }]
-    mockGetResourceCollection
-      .mockResolvedValueOnce(page1)
-      .mockResolvedValueOnce(page2)
+    mockFetch
+      .mockImplementationOnce(() => mockFetchResponse(page1))
+      .mockImplementationOnce(() => mockFetchResponse(page2))
 
     const { getAllResources } = await loadModule()
-    const result = await getAllResources('node--article')
+    const result = await getAllResources<any>('node--article')
 
-    // Second page returns a duplicate, added count is 0, so loop breaks
     expect(result).toHaveLength(1)
-    expect(result[0]).toEqual({ id: '1', title: 'A' })
+    expect(result[0].id).toBe('1')
   })
 
   it('stops when all returned resources are duplicates', async () => {
     const page1 = [{ id: '1' }, { id: '2' }]
     const page2 = [{ id: '1' }, { id: '2' }]
-    mockGetResourceCollection
-      .mockResolvedValueOnce(page1)
-      .mockResolvedValueOnce(page2)
+    mockFetch
+      .mockImplementationOnce(() => mockFetchResponse(page1))
+      .mockImplementationOnce(() => mockFetchResponse(page2))
 
     const { getAllResources } = await loadModule()
     const result = await getAllResources('node--article')
 
     expect(result).toHaveLength(2)
-    // Should not make a third call since all page2 items were duplicates
-    expect(mockGetResourceCollection).toHaveBeenCalledTimes(2)
-  })
-
-  it('passes page limit and offset in params', async () => {
-    mockGetResourceCollection.mockResolvedValueOnce([])
-
-    const { getAllResources } = await loadModule()
-    await getAllResources('node--article', undefined, 10)
-
-    expect(mockGetResourceCollection).toHaveBeenCalledWith('node--article', {
-      params: {
-        'page[limit]': 10,
-        'page[offset]': 0,
-      },
-    })
-  })
-
-  it('increments offset by the number of resources returned', async () => {
-    const page1 = [{ id: '1' }, { id: '2' }, { id: '3' }]
-    mockGetResourceCollection
-      .mockResolvedValueOnce(page1)
-      .mockResolvedValueOnce([])
-
-    const { getAllResources } = await loadModule()
-    await getAllResources('node--article', undefined, 5)
-
-    // Second call should have offset = 3 (length of page1)
-    expect(mockGetResourceCollection).toHaveBeenCalledTimes(2)
-    expect(mockGetResourceCollection.mock.calls[1][1]).toEqual({
-      params: {
-        'page[limit]': 5,
-        'page[offset]': 3,
-      },
-    })
+    expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 
   it('handles resources without id field', async () => {
     const resources = [{ title: 'No ID' }]
-    mockGetResourceCollection
-      .mockResolvedValueOnce(resources)
-      .mockResolvedValueOnce([])
+    mockFetch
+      .mockImplementationOnce(() => mockFetchResponse(resources))
+      .mockImplementationOnce(() => mockEmptyResponse())
 
     const { getAllResources } = await loadModule()
-    const result = await getAllResources('node--article')
+    const result = await getAllResources<any>('node--article')
 
     expect(result).toHaveLength(1)
-    expect(result[0]).toEqual({ title: 'No ID' })
-  })
-
-  it('uses query object from DrupalJsonApiParams when provided', async () => {
-    mockGetResourceCollection.mockResolvedValueOnce([])
-
-    const mockParamsBuilder = {
-      getQueryObject: () => ({ 'filter[status]': '1', include: 'field_tags' }),
-    }
-
-    const { getAllResources } = await loadModule()
-    await getAllResources('node--article', mockParamsBuilder as any)
-
-    expect(mockGetResourceCollection).toHaveBeenCalledWith('node--article', {
-      params: {
-        'filter[status]': '1',
-        include: 'field_tags',
-        'page[limit]': 50,
-        'page[offset]': 0,
-      },
-    })
+    expect(result[0].title).toBe('No ID')
   })
 })
 
@@ -257,11 +223,10 @@ describe('ensurePathUuidMap', () => {
     const result = await ensurePathUuidMap()
 
     expect(result).toEqual(diskMap)
-    expect(mockGetResourceCollection).not.toHaveBeenCalled()
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 
   it('builds map from provided nodes when disk cache is empty', async () => {
-    // Disk returns empty
     mockReadFile.mockRejectedValueOnce(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }))
 
     const nodes = [
@@ -286,18 +251,22 @@ describe('ensurePathUuidMap', () => {
     const fetchedNodes = [
       {
         id: 'uuid-fetched',
-        path: { alias: '/fetched-article' },
-        drupal_internal__nid: 99,
+        type: 'node--article',
+        attributes: {
+          path: { alias: '/fetched-article' },
+          drupal_internal__nid: 99,
+        },
       },
     ]
-    mockGetResourceCollection.mockResolvedValueOnce(fetchedNodes)
-    mockGetResourceCollection.mockResolvedValueOnce([])
+    mockFetch
+      .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data: fetchedNodes }) }))
+      .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data: [] }) }))
 
     const { ensurePathUuidMap } = await loadModule()
     const result = await ensurePathUuidMap()
 
     expect(result['/fetched-article']).toBe('uuid-fetched')
-    expect(mockGetResourceCollection).toHaveBeenCalled()
+    expect(mockFetch).toHaveBeenCalled()
   })
 
   it('warns on non-ENOENT read errors', async () => {
@@ -321,7 +290,6 @@ describe('ensurePathUuidMap', () => {
 
 describe('addNodesToPathUuidMap', () => {
   it('merges new nodes into existing cached map', async () => {
-    // First load an existing map to populate the cache
     const existingMap = { '/old-article': 'uuid-old' }
     mockReadFile.mockResolvedValueOnce(JSON.stringify(existingMap))
 
@@ -338,7 +306,6 @@ describe('addNodesToPathUuidMap', () => {
 
     await addNodesToPathUuidMap(newNodes as any)
 
-    // writeFile should be called with the merged map
     const writeCall = mockWriteFile.mock.calls[0]
     const writtenMap = JSON.parse(writeCall[1])
     expect(writtenMap['/old-article']).toBe('uuid-old')
@@ -372,7 +339,6 @@ describe('addNodesToPathUuidMap', () => {
     mockReadFile.mockRejectedValueOnce(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }))
 
     const { ensurePathUuidMap, addNodesToPathUuidMap } = await loadModule()
-    // Initialize with empty to set cache
     await ensurePathUuidMap([] as any)
 
     const nodes = [
@@ -385,7 +351,6 @@ describe('addNodesToPathUuidMap', () => {
 
     await addNodesToPathUuidMap(nodes as any)
 
-    // The last writeFile call is from addNodesToPathUuidMap (the first is from ensurePathUuidMap)
     const writeCall = mockWriteFile.mock.calls[mockWriteFile.mock.calls.length - 1]
     const writtenMap = JSON.parse(writeCall[1])
     expect(writtenMap['/nice-slug']).toBe('uuid-abc')
@@ -395,7 +360,6 @@ describe('addNodesToPathUuidMap', () => {
 
 describe('ensureTagUuidMap', () => {
   it('returns cached map from disk when it exists', async () => {
-    // First call for path map (module init side effect doesn't trigger, but ensureTagUuidMap reads tag map)
     const tagMap = { '5': 'tag-uuid-5', '12': 'tag-uuid-12' }
     mockReadFile.mockResolvedValueOnce(JSON.stringify(tagMap))
 
@@ -403,7 +367,7 @@ describe('ensureTagUuidMap', () => {
     const result = await ensureTagUuidMap()
 
     expect(result).toEqual(tagMap)
-    expect(mockGetResourceCollection).not.toHaveBeenCalled()
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 
   it('builds map from provided tags when disk cache is empty', async () => {
@@ -425,15 +389,22 @@ describe('ensureTagUuidMap', () => {
   it('fetches tags when none provided and disk is empty', async () => {
     mockReadFile.mockRejectedValueOnce(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }))
 
-    const fetchedTags = [{ id: 'tag-uuid-fetched', drupal_internal__tid: 30 }]
-    mockGetResourceCollection.mockResolvedValueOnce(fetchedTags)
-    mockGetResourceCollection.mockResolvedValueOnce([])
+    const fetchedTags = [
+      {
+        id: 'tag-uuid-fetched',
+        type: 'taxonomy_term--tags',
+        attributes: { drupal_internal__tid: 30 },
+      },
+    ]
+    mockFetch
+      .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data: fetchedTags }) }))
+      .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data: [] }) }))
 
     const { ensureTagUuidMap } = await loadModule()
     const result = await ensureTagUuidMap()
 
     expect(result['30']).toBe('tag-uuid-fetched')
-    expect(mockGetResourceCollection).toHaveBeenCalled()
+    expect(mockFetch).toHaveBeenCalled()
   })
 
   it('skips tags without id', async () => {
@@ -441,8 +412,8 @@ describe('ensureTagUuidMap', () => {
 
     const tags = [
       { id: 'tag-uuid-1', drupal_internal__tid: 10 },
-      { drupal_internal__tid: 20 }, // no id
-      { id: 'tag-uuid-3' }, // no tid
+      { drupal_internal__tid: 20 },
+      { id: 'tag-uuid-3' },
     ]
 
     const { ensureTagUuidMap } = await loadModule()

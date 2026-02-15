@@ -1,0 +1,266 @@
+---
+import { promises as fs } from "fs"
+import nodePath from "path"
+import BaseLayout from "@/layouts/BaseLayout.astro"
+import Comments from "@/components/Comments"
+import {
+  addNodesToPathUuidMap,
+  ensurePathUuidMap,
+  getAllResources,
+  getResource,
+  normalizePath,
+} from "@/lib/drupal"
+import type { DrupalNode } from "@/types/drupal"
+import { formatDate, absoluteUrl, getNodePath } from "@/lib/utils"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+import { getDisqusComments, type DisqusComment } from "@/lib/disqus"
+import { getIssueCommentsUrl } from "@/lib/github"
+
+export async function getStaticPaths() {
+  try {
+    console.log('[getStaticPaths] Fetching blog posts from Drupal API...')
+
+    const apiParams = new DrupalJsonApiParams()
+    apiParams.addSort("created", "DESC")
+    apiParams.addInclude(["field_tags", "field_image"])
+
+    const nodes = await getAllResources<DrupalNode>(
+      "node--article",
+      apiParams
+    )
+
+    console.log(`[getStaticPaths] Found ${nodes.length} blog posts`)
+
+    const paths = nodes.map((node) => {
+      const path = getNodePath(node)
+      const slug = path.split("/").filter(Boolean)
+      console.log(`[getStaticPaths] Generated path: /${slug.join("/")}`)
+      return {
+        params: { slug: slug.join("/") },
+        props: { nodeId: node.id },
+      }
+    })
+
+    console.log(`[getStaticPaths] Total paths generated: ${paths.length}`)
+
+    await addNodesToPathUuidMap(nodes)
+
+    return paths
+  } catch (error) {
+    console.error('[getStaticPaths] ERROR: Failed to generate static paths:', error)
+    return []
+  }
+}
+
+function estimateReadTime(html: string): number {
+  const text = html.replace(/<[^>]*>/g, '')
+  const words = text.split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.ceil(words / 200))
+}
+
+const { slug } = Astro.params
+const basePath = `/${slug}`
+const candidatePaths = Array.from(
+  new Set([
+    basePath,
+    basePath.endsWith("/") ? basePath.slice(0, -1) : `${basePath}/`,
+  ])
+)
+
+let node: DrupalNode | null = null
+let comments: any[] = []
+let disqusComments: DisqusComment[] = []
+
+try {
+  // Try map-based lookup
+  const pathMap = await ensurePathUuidMap()
+  const normalizedCandidates = candidatePaths.map(normalizePath)
+  const matchedUuid = normalizedCandidates
+    .map((candidate) => pathMap[candidate])
+    .find(Boolean)
+
+  if (matchedUuid) {
+    console.log(`[getStaticProps] Found UUID ${matchedUuid} for ${basePath}`)
+    node = await getResource<DrupalNode>(
+      "node--article",
+      matchedUuid,
+      { include: "field_tags,field_image" }
+    )
+  }
+
+  if (!node) {
+    console.error(`[getStaticProps] No node found for any candidate paths: ${candidatePaths.join(", ")}`)
+    return Astro.redirect("/404/")
+  }
+
+  const normalizedPath = normalizePath(node.path?.alias || `/node/${node.drupal_internal__nid}`)
+  let imagePath = node.field_image?.uri?.url
+  const drupalBaseUrl = import.meta.env.PUBLIC_DRUPAL_BASE_URL || process.env.PUBLIC_DRUPAL_BASE_URL || "https://example.com"
+
+  if (imagePath) {
+    try {
+      const imageUrl = new URL(imagePath, drupalBaseUrl)
+      const localPathname = imageUrl.pathname
+      const publicRoot = nodePath.join(process.cwd(), "public")
+      const localFilePath = nodePath.join(publicRoot, localPathname)
+      const normalizedLocalFilePath = nodePath.normalize(localFilePath)
+
+      if (!normalizedLocalFilePath.startsWith(publicRoot)) {
+        throw new Error(`Invalid image path: ${localPathname}`)
+      }
+
+      await fs.mkdir(nodePath.dirname(normalizedLocalFilePath), { recursive: true })
+
+      try {
+        await fs.access(normalizedLocalFilePath)
+      } catch {
+        const response = await fetch(imageUrl.toString())
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image ${imageUrl} (${response.status})`)
+        }
+        const arrayBuffer = await response.arrayBuffer()
+        await fs.writeFile(normalizedLocalFilePath, Buffer.from(arrayBuffer))
+      }
+
+      imagePath = localPathname
+    } catch (error) {
+      console.warn(`[getStaticProps] Failed to cache image locally for ${normalizedPath}:`, error)
+    }
+  }
+
+  const repo = import.meta.env.PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
+
+  if (node.field_issue_comment_id) {
+    try {
+      const response = await fetch(
+        getIssueCommentsUrl(node.field_issue_comment_id, repo),
+        {
+          headers: process.env.GITHUB_TOKEN
+            ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
+            : {},
+        }
+      )
+
+      if (response.ok) {
+        comments = await response.json()
+        console.log(`[getStaticProps] Prefetched ${comments.length} GitHub comments for ${normalizedPath}`)
+      }
+    } catch (error) {
+      console.warn(`[getStaticProps] Error prefetching comments for ${normalizedPath}:`, error)
+    }
+  }
+
+  disqusComments = getDisqusComments(normalizedPath)
+
+  if (imagePath && imagePath !== node.field_image?.uri?.url) {
+    node = {
+      ...node,
+      field_image: { ...node.field_image, uri: { ...node.field_image?.uri, url: imagePath } },
+    }
+  }
+
+  console.log(`[getStaticProps] Successfully fetched: ${node.title}`)
+} catch (error) {
+  console.error(`[getStaticProps] Error fetching blog post for ${basePath}:`, error)
+  return Astro.redirect("/404/")
+}
+
+const tags = node.field_tags || []
+const path = node.path?.alias || `/node/${node.drupal_internal__nid}`
+const url = absoluteUrl(path)
+const excerpt = node.body?.summary || node.body?.value?.substring(0, 160)
+const readTime = estimateReadTime(node.body?.value || "")
+const imagePath = node.field_image?.uri?.url
+const commentCount = comments.length + disqusComments.length
+const publishedTime = new Date((node.created as unknown as number) * 1000).toISOString()
+---
+
+<BaseLayout
+  title={`${node.title} | eiriksm.dev`}
+  description={excerpt}
+  ogTitle={node.title}
+  ogDescription={excerpt}
+  ogUrl={url}
+  ogType="article"
+  articlePublishedTime={publishedTime}
+>
+  <article class="article-full max-w-4xl mx-auto">
+    <header class="article-full-header">
+      <h1 id="page-title" class="article-full-title">
+        {node.title}
+      </h1>
+
+      <div class="article-full-meta">
+        <span class="author">Eirik S. Morland</span>
+        <span class="separator">&bull;</span>
+        <time datetime={publishedTime}>
+          {formatDate(node.created)}
+        </time>
+        <span class="separator">&bull;</span>
+        <span>{readTime} min read</span>
+      </div>
+
+      {tags.length > 0 && (
+        <div class="article-full-tags">
+          {tags.map((tag: any) => (
+            <a
+              href={`/tag/${tag.drupal_internal__tid}/`}
+              class="tag"
+            >
+              {tag.name}
+            </a>
+          ))}
+        </div>
+      )}
+
+      <div class="article-full-stats">
+        <div class="stat-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+          <span>{commentCount} comments</span>
+        </div>
+      </div>
+    </header>
+
+    <div
+      class="article-body blog-content prose prose-lg max-w-none"
+      set:html={node.body?.value || ""}
+    />
+
+    {imagePath && (
+      <div class="mt-10">
+        <img
+          alt={node.title}
+          class="mx-auto"
+          decoding="async"
+          loading="lazy"
+          src={imagePath}
+        />
+      </div>
+    )}
+
+    {(node.field_issue_comment_id || disqusComments.length > 0) && (
+      <Comments
+        client:load
+        issueId={node.field_issue_comment_id}
+        initialComments={comments}
+        disqusComments={disqusComments}
+      />
+    )}
+
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: node.title,
+      datePublished: publishedTime,
+      author: {
+        "@type": "Person",
+        name: "Eirik S. Morland",
+        url: "https://eiriksm.dev",
+      },
+      publisher: {
+        "@type": "Person",
+        name: "Eirik S. Morland",
+      },
+    })} />
+  </article>
+</BaseLayout>

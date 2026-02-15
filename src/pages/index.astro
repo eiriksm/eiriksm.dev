@@ -1,0 +1,105 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro"
+import BlogPostCard from "@/components/BlogPostCard.astro"
+import Pagination from "@/components/Pagination.astro"
+import { getAllResources } from "@/lib/drupal"
+import type { DrupalNode } from "@/types/drupal"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+import { generatePlanetFeed } from "@/lib/planet-feed"
+import { generateSitemap } from "@/lib/sitemap"
+import { getDisqusCommentCount } from "@/lib/disqus"
+import { getNodePath } from "@/lib/utils"
+import { getIssueUrl } from "@/lib/github"
+
+const POSTS_PER_PAGE = 10
+
+async function fetchCommentCount(issueId: string, repo: string): Promise<number> {
+  try {
+    const response = await fetch(
+      getIssueUrl(issueId, repo),
+      {
+        headers: process.env.GITHUB_TOKEN
+          ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
+          : {},
+      }
+    )
+    if (response.ok) {
+      const issue = await response.json()
+      return issue.comments || 0
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch comment count for issue ${issueId}:`, error)
+  }
+  return 0
+}
+
+let nodes: (DrupalNode & { commentCount?: number })[] = []
+let totalPages = 0
+
+try {
+  console.log('[index] Fetching all posts...')
+
+  const apiParams = new DrupalJsonApiParams()
+  apiParams.addSort("created", "DESC")
+  apiParams.addInclude(["field_tags"])
+
+  const fetchedNodes = await getAllResources<DrupalNode>(
+    "node--article",
+    apiParams
+  )
+
+  const allNodes = (fetchedNodes as unknown as any[])
+    .slice()
+    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+
+  const totalPosts = allNodes.length
+  const allTags = await getAllResources<any>("taxonomy_term--tags")
+  await Promise.all([
+    generatePlanetFeed(allNodes),
+    generateSitemap(allNodes, allTags),
+  ])
+  totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
+
+  const pageNodes = allNodes.slice(0, POSTS_PER_PAGE)
+
+  const repo = import.meta.env.PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
+  nodes = await Promise.all(
+    pageNodes.map(async (node: any) => {
+      let commentCount = 0
+
+      if (node.field_issue_comment_id) {
+        commentCount = await fetchCommentCount(node.field_issue_comment_id, repo)
+      }
+
+      if (commentCount === 0) {
+        const path = getNodePath(node)
+        commentCount = getDisqusCommentCount(path)
+      }
+
+      return { ...node, commentCount }
+    })
+  )
+
+  console.log(`[index] Home page: ${nodes.length} posts (${totalPosts} total, ${totalPages} pages)`)
+} catch (error) {
+  console.error('[index] Failed to fetch posts:', error)
+}
+---
+
+<BaseLayout title="eiriksm.dev" description="eiriksm.dev: Drupal blog for eiriksm.">
+  <div class="max-w-4xl mx-auto">
+    <div>
+      {nodes.map((node) => (
+        <BlogPostCard node={node} commentCount={node.commentCount} />
+      ))}
+    </div>
+
+    {nodes.length === 0 && (
+      <div class="text-center py-12">
+        <p style="color: var(--text-muted);" class="text-lg">No posts found.</p>
+      </div>
+    )}
+
+    <Pagination currentPage={1} totalPages={totalPages} />
+  </div>
+</BaseLayout>

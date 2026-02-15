@@ -1,9 +1,9 @@
 import { promises as fs } from "fs"
 import path from "path"
-import { DrupalNode } from "next-drupal"
+import type { DrupalNode } from "@/types/drupal"
 import { getNodePath } from "@/lib/utils"
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://eiriksm.dev").replace(/\/$/, "")
+const SITE_URL = ((import.meta.env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL) || "https://eiriksm.dev").replace(/\/$/, "")
 const FEED_TITLE = "eiriksm.dev Planet Drupal feed"
 const FEED_DESCRIPTION = "Posts tagged \"planet drupal\" from eiriksm.dev"
 

@@ -1,4 +1,4 @@
-import { DrupalNode } from "next-drupal"
+import type { DrupalNode } from "@/types/drupal"
 
 export function formatDate(input: string | number): string {
   // Drupal timestamps are in seconds, convert to milliseconds
@@ -12,7 +12,7 @@ export function formatDate(input: string | number): string {
 }
 
 export function absoluteUrl(input: string) {
-  return `${process.env.NEXT_PUBLIC_SITE_URL}${input}`
+  return `${import.meta.env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL || ""}${input}`
 }
 
 export function getNodePath(node: DrupalNode): string {

@@ -1,0 +1,77 @@
+---
+import Header from "@/components/Header.astro"
+import Footer from "@/components/Footer.astro"
+import Analytics from "@/components/Analytics.astro"
+import "@/styles/globals.css"
+
+interface Props {
+  title?: string
+  description?: string
+  ogTitle?: string
+  ogDescription?: string
+  ogUrl?: string
+  ogType?: string
+  articlePublishedTime?: string
+}
+
+const {
+  title = "eiriksm.dev",
+  description = "eiriksm.dev: Drupal blog for eiriksm.",
+  ogTitle,
+  ogDescription,
+  ogUrl,
+  ogType,
+  articlePublishedTime,
+} = Astro.props
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Eirik S. Morland" />
+    <meta name="keywords" content="Drupal, Development, Blog, PHP, JavaScript" />
+    <meta name="description" content={description} />
+    <meta property="og:type" content={ogType || "website"} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content={ogUrl || "https://eiriksm.dev"} />
+    <meta property="og:site_name" content="eiriksm.dev" />
+    <meta property="og:title" content={ogTitle || title} />
+    <meta property="og:description" content={ogDescription || description} />
+    {articlePublishedTime && <meta property="article:published_time" content={articlePublishedTime} />}
+    {articlePublishedTime && <meta property="article:author" content="Eirik S. Morland" />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@orkj" />
+    <meta name="twitter:creator" content="@orkj" />
+    {ogTitle && <meta name="twitter:title" content={ogTitle} />}
+    {ogDescription && <meta name="twitter:description" content={ogDescription} />}
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="eiriksm.dev Planet Drupal feed"
+      href="/planet"
+    />
+    <title>{title}</title>
+    <script is:inline>
+      (function() {
+        try {
+          var savedTheme = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <Analytics />
+    <div class="flex flex-col min-h-screen">
+      <Header />
+      <main class="flex-grow container mx-auto px-4 py-8">
+        <slot />
+      </main>
+      <Footer />
+    </div>
+  </body>
+</html>

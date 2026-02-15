@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { DrupalNode } from 'next-drupal'
+import type { DrupalNode } from '@/types/drupal'
 
 vi.mock('fs', () => ({
   promises: {
