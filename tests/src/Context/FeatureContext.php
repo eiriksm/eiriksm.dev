@@ -128,6 +128,18 @@ class FeatureContext extends RawDrupalContext {
    */
   public function iFindTheIssueIDForTheArticle() {
     $element = $this->getSession()->getPage()->find('css', '.comment-link-wrapper a');
+    $waited = 0;
+    while (!$element) {
+        $element = $this->getSession()->getPage()->find('css', '.comment-link-wrapper a');
+        if ($element) {
+            break;
+        }
+        $waited++;
+        if ($waited > 10) {
+            throw new \Exception('Could not find the issue link in the article within 10 seconds');
+        }
+        sleep(1);
+    }
     $href = $element->getAttribute('href');
     $this->lastIssueId = str_replace('https://github.com/eiriksm/eiriksm.dev-comments/issues/', '', $href);
   }
@@ -136,14 +148,9 @@ class FeatureContext extends RawDrupalContext {
    * @Then /^I create an empty comment file in the last issue$/
    */
   public function iCreateAnEmptyCommentFileInTheLastIssue() {
-    $dir = __DIR__ . '/../../../public/ci_issues/' . $this->lastIssueId;
+    $dir = __DIR__ . '/../../../out/ci_issues/' . $this->lastIssueId;
     @mkdir($dir);
     file_put_contents($dir . '/comments', '[]');
-    $this->cacheBust();
-  }
-
-  protected function cacheBust() {
-
   }
 
   /**
@@ -157,7 +164,7 @@ class FeatureContext extends RawDrupalContext {
    * @Then /^I place a comment in the last issue$/
    */
   public function iPlaceACommentInTheLastIssue() {
-    $dir = __DIR__ . '/../../../public/ci_issues/' . $this->lastIssueId;
+    $dir = __DIR__ . '/../../../out/ci_issues/' . $this->lastIssueId;
     @mkdir($dir);
     file_put_contents($dir . '/comments', '[
   {
@@ -173,7 +180,6 @@ class FeatureContext extends RawDrupalContext {
   }
 ]
 ');
-    $this->cacheBust();
   }
 
 }

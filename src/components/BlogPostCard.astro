@@ -1,0 +1,59 @@
+---
+import type { DrupalNode } from "@/types/drupal"
+import { formatDate, getNodePath, extractExcerpt } from "@/lib/utils"
+
+interface Props {
+  node: DrupalNode
+  commentCount?: number
+}
+
+const { node, commentCount = 0 } = Astro.props
+const path = getNodePath(node)
+const excerpt = node.body?.summary || extractExcerpt(node.body?.value || "")
+const tags = node.field_tags || []
+---
+
+<article class="article-card node node--view-mode-teaser">
+  <h2 class="card-title node__title">
+    <a href={path}>
+      {node.title}
+    </a>
+  </h2>
+
+  <div class="card-meta">
+    <time datetime={new Date((node.created as unknown as number) * 1000).toISOString()}>
+      {formatDate(node.created)}
+    </time>
+  </div>
+
+  {excerpt && (
+    <p class="card-excerpt line-clamp-3">
+      {excerpt}
+    </p>
+  )}
+
+  {tags.length > 0 && (
+    <div class="tags-list clearfix field-type-taxonomy-term-reference">
+      {tags.map((tag: any) => (
+        <a
+          href={`/tag/${tag.drupal_internal__tid}/`}
+          class="tag"
+        >
+          {tag.name}
+        </a>
+      ))}
+    </div>
+  )}
+
+  <div class="card-footer">
+    <div class="card-stats">
+      <div class="comment-count">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+        <span>{commentCount}</span>
+      </div>
+    </div>
+    <a href={path} class="read-article-link">
+      Read article <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+    </a>
+  </div>
+</article>

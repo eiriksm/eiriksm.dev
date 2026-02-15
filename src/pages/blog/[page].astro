@@ -1,0 +1,123 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro"
+import BlogPostCard from "@/components/BlogPostCard.astro"
+import Pagination from "@/components/Pagination.astro"
+import { getAllResources } from "@/lib/drupal"
+import type { DrupalNode } from "@/types/drupal"
+import { DrupalJsonApiParams } from "drupal-jsonapi-params"
+import { getDisqusCommentCount } from "@/lib/disqus"
+import { getNodePath } from "@/lib/utils"
+import { getIssueUrl } from "@/lib/github"
+
+const POSTS_PER_PAGE = 10
+
+export async function getStaticPaths() {
+  const postsPerPage = 10
+  try {
+    console.log('[getStaticPaths] Generating pagination paths...')
+
+    const apiParams = new DrupalJsonApiParams()
+    apiParams.addSort("created", "DESC")
+
+    const nodes = (
+      await getAllResources<DrupalNode>("node--article", apiParams)
+    )
+      .slice()
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+
+    const totalPages = Math.ceil(nodes.length / postsPerPage)
+    const paths: Array<{ params: { page: string } }> = []
+
+    for (let i = 2; i <= totalPages; i++) {
+      paths.push({ params: { page: i.toString() } })
+    }
+
+    console.log(`[getStaticPaths] Generated ${paths.length} pagination paths (pages 2-${totalPages})`)
+
+    return paths
+  } catch (error) {
+    console.error('[getStaticPaths] Failed to generate pagination paths:', error)
+    return []
+  }
+}
+
+async function fetchCommentCount(issueId: string, repo: string): Promise<number> {
+  try {
+    const response = await fetch(
+      getIssueUrl(issueId, repo),
+      {
+        headers: process.env.GITHUB_TOKEN
+          ? { Authorization: `token ${process.env.GITHUB_TOKEN}` }
+          : {},
+      }
+    )
+    if (response.ok) {
+      const issue = await response.json()
+      return issue.comments || 0
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch comment count for issue ${issueId}:`, error)
+  }
+  return 0
+}
+
+const { page } = Astro.params
+const currentPage = parseInt(page!, 10)
+
+let nodes: (DrupalNode & { commentCount?: number })[] = []
+let totalPages = 0
+
+try {
+  console.log(`[blog/${page}] Fetching posts for page ${currentPage}...`)
+
+  const apiParams = new DrupalJsonApiParams()
+  apiParams.addSort("created", "DESC")
+  apiParams.addInclude(["field_tags"])
+
+  const allNodes = (
+    await getAllResources<DrupalNode>("node--article", apiParams)
+  )
+    .slice()
+    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+
+  const totalPosts = allNodes.length
+  totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE)
+
+  const offset = (currentPage - 1) * POSTS_PER_PAGE
+  const pageNodes = allNodes.slice(offset, offset + POSTS_PER_PAGE)
+
+  const repo = import.meta.env.PUBLIC_GITHUB_REPO || "eiriksm/eiriksm.dev-comments"
+  nodes = await Promise.all(
+    pageNodes.map(async (node: any) => {
+      let commentCount = 0
+
+      if (node.field_issue_comment_id) {
+        commentCount = await fetchCommentCount(node.field_issue_comment_id, repo)
+      }
+
+      if (commentCount === 0) {
+        const path = getNodePath(node)
+        commentCount = getDisqusCommentCount(path)
+      }
+
+      return { ...node, commentCount }
+    })
+  )
+
+  console.log(`[blog/${page}] Page ${currentPage}: ${nodes.length} posts (${totalPosts} total)`)
+} catch (error) {
+  console.error(`[blog/${page}] Failed to fetch posts:`, error)
+}
+---
+
+<BaseLayout title={`Latest Posts - Page ${currentPage} | eiriksm.dev`} description={`Blog posts page ${currentPage}`}>
+  <div class="max-w-4xl mx-auto">
+    <div>
+      {nodes.map((node) => (
+        <BlogPostCard node={node} commentCount={node.commentCount} />
+      ))}
+    </div>
+
+    <Pagination currentPage={currentPage} totalPages={totalPages} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,55 @@
+---
+import DarkModeToggle from "./DarkModeToggle.astro"
+
+const showMenu = import.meta.env.PUBLIC_SHOW_MENU === "1"
+---
+
+<header style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+  <div class="max-w-4xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between">
+      <a
+        href="/"
+        class="text-2xl font-bold transition-colors"
+        style="color: var(--text-primary); text-decoration: none;"
+      >
+        eiriksm.dev
+      </a>
+      <div class="flex items-center gap-6">
+        {showMenu && (
+          <nav>
+            <ul class="flex space-x-6">
+              <li>
+                <a
+                  href="/"
+                  class="transition-colors"
+                  style="color: var(--text-secondary); text-decoration: none;"
+                >
+                  Blog
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/about/"
+                  class="transition-colors"
+                  style="color: var(--text-secondary); text-decoration: none;"
+                >
+                  About
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/talks/"
+                  class="transition-colors"
+                  style="color: var(--text-secondary); text-decoration: none;"
+                >
+                  Talks
+                </a>
+              </li>
+            </ul>
+          </nav>
+        )}
+        <DarkModeToggle />
+      </div>
+    </div>
+  </div>
+</header>
