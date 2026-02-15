@@ -15,10 +15,11 @@
 </button>
 
 <script is:inline>
-  (function() {
+  document.addEventListener('astro:page-load', function() {
     var toggle = document.getElementById('dark-mode-toggle');
     var sunIcon = document.getElementById('sun-icon');
     var moonIcon = document.getElementById('moon-icon');
+    if (!toggle || !sunIcon || !moonIcon) return;
 
     function updateIcons() {
       var isDark = document.documentElement.classList.contains('dark');
@@ -40,5 +41,5 @@
       }
       updateIcons();
     });
-  })();
+  });
 </script>
