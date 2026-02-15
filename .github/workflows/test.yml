@@ -23,7 +23,7 @@ jobs:
       API_URL: ${{ secrets.API_URL }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       NEXT_PUBLIC_GITHUB_REPO: eiriksm/eiriksm.dev-comments
-      PUBLIC_DRUPAL_BASE_URL: http://api.orkjern.com
+      PUBLIC_DRUPAL_BASE_URL: ${{ secrets.API_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
