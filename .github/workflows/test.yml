@@ -63,7 +63,7 @@ jobs:
         run: npm run build
 
       - name: Start the serving of the site
-        run: pm2 start "npx --yes serve@latest -l tcp://0.0.0.0:9000 out" --name server
+        run: pm2 start "npx --yes serve@latest -l tcp://0.0.0.0:9000 dist" --name server
 
       - name: Make sure serving has started
         run: ./vendor/bin/wait-for-listen 9000
