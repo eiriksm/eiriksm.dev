@@ -8,7 +8,7 @@ export default defineConfig({
   trailingSlash: 'always',
   prefetch: {
     defaultStrategy: 'viewport',
-    prefetchAll: false,
+    prefetchAll: true,
   },
   integrations: [
     react(),
