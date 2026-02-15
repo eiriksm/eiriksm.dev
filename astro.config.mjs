@@ -6,6 +6,10 @@ export default defineConfig({
   site: 'https://eiriksm.dev',
   output: 'static',
   trailingSlash: 'always',
+  prefetch: {
+    defaultStrategy: 'viewport',
+    prefetchAll: false,
+  },
   integrations: [
     react(),
     sitemap(),
