@@ -1,6 +1,6 @@
 ---
 import type { DrupalNode } from "@/types/drupal"
-import { formatDate, getNodePath, extractExcerpt } from "@/lib/utils"
+import { formatDate, getNodePath, extractExcerpt, toIsoDate } from "@/lib/utils"
 
 interface Props {
   node: DrupalNode
@@ -21,7 +21,7 @@ const tags = node.field_tags || []
   </h2>
 
   <div class="card-meta">
-    <time datetime={new Date((node.created as unknown as number) * 1000).toISOString()}>
+    <time datetime={toIsoDate(node.created)}>
       {formatDate(node.created)}
     </time>
   </div>

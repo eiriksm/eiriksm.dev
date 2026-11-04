@@ -11,7 +11,7 @@ import {
   normalizePath,
 } from "@/lib/drupal"
 import type { DrupalNode } from "@/types/drupal"
-import { formatDate, absoluteUrl, getNodePath } from "@/lib/utils"
+import { formatDate, absoluteUrl, getNodePath, toIsoDate } from "@/lib/utils"
 import { DrupalJsonApiParams } from "drupal-jsonapi-params"
 import { getDisqusComments, type DisqusComment } from "@/lib/disqus"
 import { getIssueCommentsUrl } from "@/lib/github"
@@ -172,7 +172,7 @@ const excerpt = node.body?.summary || node.body?.value?.substring(0, 160)
 const readTime = estimateReadTime(node.body?.value || "")
 const imagePath = node.field_image?.uri?.url
 const commentCount = comments.length + disqusComments.length
-const publishedTime = new Date((node.created as unknown as number) * 1000).toISOString()
+const publishedTime = toIsoDate(node.created)
 ---
 
 <BaseLayout

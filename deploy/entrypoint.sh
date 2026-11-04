@@ -2,7 +2,7 @@
 
 set -eu
 
-wget $DISQUS_XML_URL -O disqus.xml
+wget --auth-no-challenge --user="$BASIC_AUTH_USERNAME" --password="$BASIC_AUTH_PASSWORD" "$DISQUS_XML_URL" -O disqus.xml
 echo "unsafe-perm = true" > .npmrc
 
 # Temporarily unset NODE_ENV to install devDependencies (needed for TypeScript build)

@@ -24,6 +24,42 @@ function getAuthHeaders(): Record<string, string> {
   return {}
 }
 
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
+const MAX_REDIRECTS = 5
+
+/**
+ * fetch() drops the Authorization header when following a cross-origin
+ * redirect (and http -> https counts as cross-origin), which made every
+ * request to an http:// API URL that redirects to https:// fail with a 401.
+ * Follow redirects ourselves and keep the auth header as long as we stay on
+ * the same host.
+ */
+async function fetchDrupal(url: string): Promise<Response> {
+  const authHeaders = getAuthHeaders()
+  const originalHost = new URL(url).hostname
+  let currentUrl = url
+
+  for (let hops = 0; ; hops++) {
+    const sameHost = new URL(currentUrl).hostname === originalHost
+    const response = await fetch(currentUrl, {
+      headers: {
+        Accept: "application/vnd.api+json",
+        ...(sameHost ? authHeaders : {}),
+      },
+      redirect: "manual",
+    })
+
+    const location = response.headers?.get("location")
+    if (!REDIRECT_STATUSES.has(response.status) || !location) {
+      return response
+    }
+    if (hops >= MAX_REDIRECTS) {
+      throw new Error(`Too many redirects for ${url}`)
+    }
+    currentUrl = new URL(location, currentUrl).toString()
+  }
+}
+
 /**
  * Deserialize a single JSON:API resource object, flattening attributes
  * and resolving included relationships.
@@ -70,12 +106,7 @@ function deserializeResource(resource: any, included?: any[]): any {
 }
 
 async function fetchJsonApi<T>(url: string): Promise<T[]> {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.api+json",
-      ...getAuthHeaders(),
-    },
-  })
+  const response = await fetchDrupal(url)
 
   if (!response.ok) {
     throw new Error(`JSON:API request failed: ${response.status} ${response.statusText} for ${url}`)
@@ -176,12 +207,7 @@ export async function getResource<TResource>(
     : ""
   const url = `${DRUPAL_BASE_URL}/jsonapi/${resourceType.replace("--", "/")}/${uuid}${queryString ? `?${queryString}` : ""}`
 
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.api+json",
-      ...getAuthHeaders(),
-    },
-  })
+  const response = await fetchDrupal(url)
 
   if (!response.ok) {
     if (response.status === 404) return null

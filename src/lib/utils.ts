@@ -1,9 +1,19 @@
 import type { DrupalNode } from "@/types/drupal"
 
+/**
+ * Drupal dates come either as unix timestamps in seconds (numbers) or, from
+ * JSON:API, as ISO 8601 strings.
+ */
+export function toDate(input: string | number): Date {
+  return new Date(typeof input === "number" ? input * 1000 : input)
+}
+
+export function toIsoDate(input: string | number): string {
+  return toDate(input).toISOString()
+}
+
 export function formatDate(input: string | number): string {
-  // Drupal timestamps are in seconds, convert to milliseconds
-  const timestamp = typeof input === "number" ? input * 1000 : input
-  const date = new Date(timestamp)
+  const date = toDate(input)
   return date.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
