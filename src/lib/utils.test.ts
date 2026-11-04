@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, absoluteUrl, getNodePath, extractExcerpt } from './utils'
+import { formatDate, absoluteUrl, getNodePath, extractExcerpt, toIsoDate } from './utils'
 
 describe('formatDate', () => {
   it('formats a Unix timestamp (seconds) correctly', () => {
@@ -157,5 +157,15 @@ describe('extractExcerpt', () => {
     const html = '<div><p>First paragraph.</p><p>Second&nbsp;paragraph.</p></div>'
     const result = extractExcerpt(html)
     expect(result).toBe('First paragraph. Second paragraph.')
+  })
+})
+
+describe('toIsoDate', () => {
+  it('handles unix timestamps in seconds', () => {
+    expect(toIsoDate(1737331200)).toBe('2025-01-20T00:00:00.000Z')
+  })
+
+  it('handles ISO 8601 strings as returned by JSON:API', () => {
+    expect(toIsoDate('2025-01-20T00:00:00+00:00')).toBe('2025-01-20T00:00:00.000Z')
   })
 })
