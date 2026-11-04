@@ -50,7 +50,9 @@ jobs:
         run: composer --verbose install
 
       - name: Download the DISQUS xml
-        run: wget ${{ secrets.DISQUS_XML_URL }} -O disqus.xml
+        env:
+          DISQUS_XML_URL: ${{ secrets.DISQUS_XML_URL }}
+        run: wget --auth-no-challenge --user="$BASIC_AUTH_USERNAME" --password="$BASIC_AUTH_PASSWORD" "$DISQUS_XML_URL" -O disqus.xml
 
       - name: Install node dependencies
         run:  |
