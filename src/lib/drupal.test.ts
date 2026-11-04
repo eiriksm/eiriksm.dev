@@ -436,3 +436,49 @@ describe('ensureTagUuidMap', () => {
     expect(result['99']).toBeUndefined()
   })
 })
+
+describe('redirect handling', () => {
+  const redirect = (location: string) =>
+    Promise.resolve({ ok: false, status: 301, headers: new Headers({ location }) })
+  const okJson = (body: any) =>
+    Promise.resolve({ ok: true, status: 200, headers: new Headers(), json: () => Promise.resolve(body) })
+
+  beforeEach(() => {
+    vi.stubEnv('BASIC_AUTH_USERNAME', 'user')
+    vi.stubEnv('BASIC_AUTH_PASSWORD', 'pass')
+  })
+
+  it('keeps basic auth when following an http -> https redirect on the same host', async () => {
+    mockFetch
+      .mockImplementationOnce(() => redirect('https://example.com/jsonapi/taxonomy_term/tags/abc'))
+      .mockImplementationOnce(() => okJson({ data: { id: 'abc', type: 'taxonomy_term--tags', attributes: { name: 'Tag' } } }))
+    const { getResource } = await loadModule()
+
+    const result = await getResource<any>('taxonomy_term--tags', 'abc')
+
+    expect(result?.name).toBe('Tag')
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(mockFetch.mock.calls[1][0]).toBe('https://example.com/jsonapi/taxonomy_term/tags/abc')
+    expect(mockFetch.mock.calls[1][1].headers.Authorization).toBe(`Basic ${Buffer.from('user:pass').toString('base64')}`)
+    expect(mockFetch.mock.calls[0][1].redirect).toBe('manual')
+  })
+
+  it('does not send basic auth to a different host', async () => {
+    mockFetch
+      .mockImplementationOnce(() => redirect('https://other.example.org/x'))
+      .mockImplementationOnce(() => okJson({ data: { id: 'abc', type: 't', attributes: {} } }))
+    const { getResource } = await loadModule()
+
+    await getResource<any>('taxonomy_term--tags', 'abc')
+
+    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBeDefined()
+    expect(mockFetch.mock.calls[1][1].headers.Authorization).toBeUndefined()
+  })
+
+  it('gives up after too many redirects', async () => {
+    mockFetch.mockImplementation(() => redirect('https://example.com/loop'))
+    const { getResource } = await loadModule()
+
+    await expect(getResource<any>('taxonomy_term--tags', 'abc')).rejects.toThrow('Too many redirects')
+  })
+})
