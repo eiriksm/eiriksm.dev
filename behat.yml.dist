@@ -8,6 +8,7 @@ default:
       filters:
         tags: "~@todo"
       contexts:
+        - DrevOps\BehatScreenshotExtension\Context\ScreenshotContext
         - eiriksm\Orkjern\Tests\Context\FeatureContext
         - Drupal\DrupalExtension\Context\DrupalContext
         - Drupal\DrupalExtension\Context\MinkContext
@@ -15,10 +16,17 @@ default:
         - Drupal\DrupalExtension\Context\MessageContext
         - Drupal\DrupalExtension\Context\DrushContext
   extensions:
+    frontkom\BehatAutoDdevNonHeadless\DisableHeadlessExtension: ~
+    DrevOps\BehatScreenshotExtension:
+      dir: '%paths.base%/screenshots'
+      on_failed: true
+      failed_prefix: 'failed_'
+      purge: false
     Behat\MinkExtension:
       files_path: '%paths.base%/tests/files'
       base_url: http://172.17.0.1:9000
       goutte: ~
+      browser_name: chrome
       selenium2:
         wd_host: http://127.0.0.1:8643/wd/hub
         capabilities:

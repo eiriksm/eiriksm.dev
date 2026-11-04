@@ -10,6 +10,8 @@
     },
     "require-dev": {
         "drupal/drupal-extension": "^4.0",
-        "eiriksm/wait-for-listen": "^1.0"
+        "eiriksm/wait-for-listen": "^1.0",
+        "frontkom/behat-ddev-auto-non-headless": "dev-main",
+        "drevops/behat-screenshot": "^2.2"
     }
 }

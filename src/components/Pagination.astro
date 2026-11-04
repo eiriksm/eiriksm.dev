@@ -1,0 +1,47 @@
+---
+interface Props {
+  currentPage: number
+  totalPages: number
+  basePath?: string
+}
+
+const { currentPage, totalPages, basePath = "/blog" } = Astro.props
+
+function getPagePath(page: number) {
+  if (page === 1) return "/"
+  return `${basePath}/${page}/`
+}
+---
+
+{totalPages > 1 && (
+  <nav
+    class="mt-12 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-4"
+    aria-label="Pagination"
+  >
+    {currentPage > 1 ? (
+      <a
+        href={getPagePath(currentPage - 1)}
+        class="justify-self-start px-2 py-1 text-[var(--link-color)] hover:text-[var(--link-hover)] transition-colors"
+      >
+        &larr; Previous
+      </a>
+    ) : (
+      <span class="px-2 py-1" aria-hidden="true" />
+    )}
+
+    <span class="text-center text-[var(--text-secondary)]">
+      Page {currentPage} of {totalPages}
+    </span>
+
+    {currentPage < totalPages ? (
+      <a
+        href={getPagePath(currentPage + 1)}
+        class="justify-self-end px-2 py-1 text-[var(--link-color)] hover:text-[var(--link-hover)] transition-colors"
+      >
+        Next &rarr;
+      </a>
+    ) : (
+      <span class="px-2 py-1" aria-hidden="true" />
+    )}
+  </nav>
+)}

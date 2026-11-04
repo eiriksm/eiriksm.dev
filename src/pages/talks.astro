@@ -1,0 +1,122 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro"
+
+interface Talk {
+  title: string
+  event: string
+  date: string
+  videoUrl?: string
+  slidesUrl?: string
+}
+
+const talks: Talk[] = [
+  {
+    title: "Content-driven ecommerce with Drupal Commerce",
+    event: "Drupal Dev Days Cluj",
+    date: "2019-06",
+    slidesUrl: "https://eiriksm.github.io/content-driven-ecommerce-ddd19/",
+    videoUrl: "https://drupal.tv/external-video/2019-07-18/content-driven-ecommerce-drupal-commerce",
+  },
+  {
+    title: "Automated updates with Violinist.io",
+    event: "Drupal Camp Oslo",
+    date: "2018-11",
+    slidesUrl: "https://eiriksm.github.io/violinist-dcoslo/",
+  },
+  {
+    title: "Commerce 2 / Akademika.no case study",
+    event: "Drupal Camp Oslo",
+    date: "2018-11",
+  },
+  {
+    title: "Drupal and Internet of Things",
+    event: "Drupal Camp Oslo",
+    date: "2015-11",
+  },
+]
+
+function formatTalkDate(dateStr: string): string {
+  const [year, month] = dateStr.split("-")
+  const date = new Date(parseInt(year), parseInt(month) - 1)
+  return date.toLocaleDateString("en-US", { year: "numeric", month: "long" })
+}
+---
+
+<BaseLayout title="Talks | eiriksm.dev" description="Conference talks and presentations by Eirik S. Morland">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8" style="color: var(--text-primary);">Talks & Presentations</h1>
+
+    <div class="prose prose-lg max-w-none mb-8">
+      <p class="text-xl leading-relaxed" style="color: var(--text-secondary);">
+        A collection of my conference talks, presentations, and speaking engagements
+        at Drupal events and meetups.
+      </p>
+    </div>
+
+    <div class="space-y-4">
+      {talks.map((talk) => (
+        <div
+          class="talk-card p-4 rounded-lg border"
+          style={`background-color: var(--bg-card); border-color: var(--border-color);`}
+        >
+          <h3 class="font-semibold text-lg mb-2" style="color: var(--text-primary);">
+            {talk.title}
+          </h3>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" style="color: var(--text-muted);">
+            <span>{talk.event}</span>
+            <span>&bull;</span>
+            <span>{formatTalkDate(talk.date)}</span>
+          </div>
+          {(talk.videoUrl || talk.slidesUrl) && (
+            <div class="flex gap-4 mt-3">
+              {talk.videoUrl && (
+                <a
+                  href={talk.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                  <span>Watch video</span>
+                </a>
+              )}
+              {talk.slidesUrl && (
+                <a
+                  href={talk.slidesUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 text-sm hover:opacity-80"
+                  style="color: var(--accent-color);"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
+                  <span>View slides</span>
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <div class="mt-12 p-6 rounded-lg" style="background-color: var(--bg-secondary);">
+      <h2 class="text-xl font-semibold mb-3" style="color: var(--text-primary);">Podcast Appearances</h2>
+      <ul class="space-y-2">
+        <li>
+          <a
+            href="https://talkingdrupal.com/443"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 hover:underline"
+            style="color: var(--accent-color);"
+          >
+            Talking Drupal #443 - Violinist.io
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+          </a>
+          <p class="text-sm mt-1" style="color: var(--text-muted);">
+            Discussing automated Composer dependency updates
+          </p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</BaseLayout>
